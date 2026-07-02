@@ -1,4 +1,7 @@
 from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+import pickle
 import logging
 import spacy
 
@@ -12,7 +15,7 @@ logging.basicConfig(
 )
 
 # ==========================================================
-# Load spaCy
+# Load spaCy Model
 # ==========================================================
 
 logging.info("Loading spaCy model...")
@@ -59,8 +62,7 @@ def build_chunks(
     max_chars: int = 150
 ):
     """
-    Combine sentences into chunks
-    without breaking words.
+    Combine multiple sentences into chunks.
     """
 
     sentences = split_into_sentences(text)
@@ -71,7 +73,7 @@ def build_chunks(
 
     for sentence in sentences:
 
-        if len(current_chunk) + len(sentence) < max_chars:
+        if len(current_chunk) + len(sentence) + 1 <= max_chars:
 
             current_chunk += sentence + " "
 
@@ -94,12 +96,69 @@ def build_chunks(
 
 def generate_embeddings(chunks):
     """
-    Convert chunks into embedding vectors.
+    Convert text chunks into embedding vectors.
     """
 
-    embeddings = embedding_model.encode(chunks)
+    embeddings = embedding_model.encode(
+        chunks,
+        convert_to_numpy=True
+    )
 
-    return embeddings
+    return embeddings.astype("float32")
+
+
+# ==========================================================
+# Build FAISS Index
+# ==========================================================
+
+def build_faiss_index(embeddings):
+    """
+    Create a FAISS vector database.
+    """
+
+    dimension = embeddings.shape[1]
+
+    index = faiss.IndexFlatL2(dimension)
+
+    index.add(embeddings)
+
+    return index
+
+
+# ==========================================================
+# Save FAISS Index
+# ==========================================================
+
+def save_faiss_index(
+    index,
+    filename="data/faiss.index"
+):
+    """
+    Save FAISS index to disk.
+    """
+
+    faiss.write_index(index, filename)
+
+    logging.info("FAISS index saved.")
+
+
+# ==========================================================
+# Save Chunks
+# ==========================================================
+
+def save_chunks(
+    chunks,
+    filename="data/chunks.pkl"
+):
+    """
+    Save original chunks for retrieval.
+    """
+
+    with open(filename, "wb") as file:
+
+        pickle.dump(chunks, file)
+
+    logging.info("Chunks saved.")
 
 
 # ==========================================================
@@ -109,25 +168,25 @@ def generate_embeddings(chunks):
 if __name__ == "__main__":
 
     text = """
-Pump P-101 is overheating.
+    Pump P-101 is overheating.
 
-Pressure Sensor PT-201 has failed.
+    Pressure Sensor PT-201 has failed.
 
-Motor MTR-05 should be replaced.
+    Motor MTR-05 should be replaced.
 
-Valve VLV-203 is leaking.
+    Valve VLV-203 is leaking.
 
-Operator John repaired Pump P-101 yesterday.
-"""
+    Operator John repaired Pump P-101 yesterday.
+    """
 
-    # ------------------------------------------
+    # ------------------------------------------------------
     # Build Chunks
-    # ------------------------------------------
+    # ------------------------------------------------------
 
     chunks = build_chunks(text)
 
     print("\nChunks")
-    print("-" * 50)
+    print("-" * 60)
 
     for i, chunk in enumerate(chunks, start=1):
 
@@ -135,14 +194,14 @@ Operator John repaired Pump P-101 yesterday.
 
         print(chunk)
 
-    # ------------------------------------------
+    # ------------------------------------------------------
     # Generate Embeddings
-    # ------------------------------------------
+    # ------------------------------------------------------
 
     embeddings = generate_embeddings(chunks)
 
     print("\nEmbeddings")
-    print("-" * 50)
+    print("-" * 60)
 
     for i, embedding in enumerate(embeddings, start=1):
 
@@ -153,3 +212,31 @@ Operator John repaired Pump P-101 yesterday.
         print("First 10 Values:")
 
         print(embedding[:10])
+
+    # ------------------------------------------------------
+    # Build FAISS Index
+    # ------------------------------------------------------
+
+    index = build_faiss_index(embeddings)
+
+    print("\nFAISS Index")
+    print("-" * 60)
+
+    print("Number of vectors:", index.ntotal)
+
+    # ------------------------------------------------------
+    # Save Files
+    # ------------------------------------------------------
+
+    save_faiss_index(index)
+
+    save_chunks(chunks)
+
+    print("\nVector Database Created Successfully!")
+
+    print("\nSaved Files")
+    print("-" * 60)
+
+    print("data/faiss.index")
+
+    print("data/chunks.pkl")

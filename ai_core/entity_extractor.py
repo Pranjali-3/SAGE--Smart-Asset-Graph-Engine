@@ -335,6 +335,51 @@ def filter_entities(entities):
 
 
 # ==========================================================
+# Public Entity Extraction Function
+# ==========================================================
+
+def extract_entities(text: str):
+    """
+    Extract entities using spaCy, BERT and Regex.
+    Returns the final cleaned entity list.
+    """
+
+    # Extract entities from all sources
+    spacy_entities = extract_spacy_entities(text)
+    bert_entities = extract_bert_entities(text)
+    regex_entities = extract_regex_entities(text)
+
+    # Merge entities
+    merged_entities = merge_entities(
+        spacy_entities,
+        bert_entities,
+        regex_entities
+    )
+
+    final_entities = []
+
+    # Resolve labels and confidence
+    for entity in merged_entities:
+
+        final_entities.append({
+
+            "text": entity["text"],
+
+            "label": resolve_best_label(entity["labels"]),
+
+            "sources": entity["sources"],
+
+            "confidence": calculate_confidence(entity["sources"])
+
+        })
+
+    # Remove noisy entities
+    final_entities = filter_entities(final_entities)
+
+    return final_entities
+
+
+# ==========================================================
 # Main
 # ==========================================================
 
@@ -356,38 +401,10 @@ Refer SOP-001.
 Document DOC-2025-01.
 """
 
-    spacy_entities = extract_spacy_entities(text)
-
-    bert_entities = extract_bert_entities(text)
-
-    regex_entities = extract_regex_entities(text)
-
-    merged_entities = merge_entities(
-
-        spacy_entities,
-        bert_entities,
-        regex_entities
-
-    )
-
-    final_entities = []
-
-    for entity in merged_entities:
-
-        final_entities.append({
-
-            "text": entity["text"],
-            "label": resolve_best_label(entity["labels"]),
-            "sources": entity["sources"],
-            "confidence": calculate_confidence(entity["sources"])
-
-        })
-
-    final_entities = filter_entities(final_entities)
+    final_entities = extract_entities(text)
 
     print("\nFinal Entities")
     print("-" * 50)
 
     for entity in final_entities:
-
         print(entity)
