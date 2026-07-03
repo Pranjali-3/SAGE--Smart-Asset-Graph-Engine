@@ -3,7 +3,6 @@ import faiss
 import pickle
 import logging
 import numpy as np
-import re
 
 from entity_extractor import extract_entities
 
@@ -54,7 +53,8 @@ def load_chunks(
     filename="data/chunks.pkl"
 ):
     """
-    Load stored document chunks.
+    Load document chunks stored during
+    embedding generation.
     """
 
     with open(filename, "rb") as file:
@@ -74,19 +74,23 @@ def embed_query(
     query: str
 ):
     """
-    Convert the user's query into an embedding.
+    Convert the user's query
+    into an embedding vector.
     """
 
     embedding = embedding_model.encode(
+
         [query],
+
         convert_to_numpy=True
+
     )
 
     return embedding.astype("float32")
 
 
 # ==========================================================
-# Search Vector Database
+# Semantic Search
 # ==========================================================
 
 def search_index(
@@ -95,13 +99,16 @@ def search_index(
     top_k=10
 ):
     """
-    Perform semantic similarity search
-    using the FAISS vector database.
+    Search the FAISS vector database
+    for the most relevant chunks.
     """
 
     distances, indices = index.search(
+
         query_embedding,
+
         top_k
+
     )
 
     return distances, indices
@@ -117,152 +124,54 @@ def retrieve_chunks(
     distances
 ):
     """
-    Retrieve chunks returned by FAISS
-    together with their similarity score.
+    Retrieve chunk text along with
+    semantic distance.
     """
 
     retrieved = []
 
     for idx, distance in zip(
+
         indices[0],
+
         distances[0]
+
     ):
 
         if idx == -1:
+
             continue
 
         if idx >= len(chunks):
+
             continue
 
         retrieved.append({
 
             "chunk": chunks[idx],
 
-            "distance": float(distance),
+            "index": idx,
 
-            "index": int(idx)
+            "distance": float(distance)
 
         })
 
     return retrieved
-
-# ==========================================================
-# Relationship Extraction
-# ==========================================================
-
-# Common industrial action verbs
-
-RELATION_PATTERNS = [
-
-    "repair",
-    "repaired",
-    "replace",
-    "replaced",
-    "inspect",
-    "inspected",
-    "check",
-    "checked",
-    "connect",
-    "connected",
-    "disconnect",
-    "disconnected",
-    "install",
-    "installed",
-    "remove",
-    "removed",
-    "monitor",
-    "monitored",
-    "measure",
-    "measured",
-    "detect",
-    "detected",
-    "cause",
-    "caused",
-    "fail",
-    "failed",
-    "trigger",
-    "triggered",
-    "increase",
-    "increased",
-    "decrease",
-    "decreased",
-    "overheat",
-    "overheated",
-    "leak",
-    "leaking",
-    "leaked",
-    "start",
-    "started",
-    "stop",
-    "stopped",
-    "shutdown",
-    "opened",
-    "closed",
-    "activate",
-    "activated"
-]
-
-
-# ==========================================================
-# Extract Relationships
-# ==========================================================
-
-def extract_relationships(text):
-    """
-    Extract simple Subject-Relation-Object triples
-    using entities and action words.
-    """
-
-    entities = extract_entities(text)
-
-    relationships = []
-
-    if len(entities) < 2:
-        return relationships
-
-    lower_text = text.lower()
-
-    for verb in RELATION_PATTERNS:
-
-        if verb in lower_text:
-
-            relation = verb
-
-            break
-
-    else:
-
-        relation = "related_to"
-
-    for i in range(len(entities) - 1):
-
-        relationships.append({
-
-            "subject": entities[i]["text"],
-
-            "relation": relation,
-
-            "object": entities[i + 1]["text"]
-
-        })
-
-    return relationships
-
-
 # ==========================================================
 # Entity Match Score
 # ==========================================================
 
-def entity_score(
+def calculate_entity_score(
     query_entities,
     chunk_entities
 ):
     """
-    Calculate score based on
-    matching entities.
+    Calculate score based on the number
+    of matching entities.
     """
 
-    score = 0
+    if not query_entities:
+        return 0
 
     query_set = {
 
@@ -271,6 +180,8 @@ def entity_score(
         for entity in query_entities
 
     }
+
+    score = 0
 
     for entity in chunk_entities:
 
@@ -282,99 +193,38 @@ def entity_score(
 
 
 # ==========================================================
-# Relationship Match Score
+# Semantic Score
 # ==========================================================
 
-def relationship_score(
-    query_relationships,
-    chunk_relationships
+def calculate_semantic_score(
+    distance
 ):
     """
-    Compare relationships extracted
-    from query and chunk.
+    Convert FAISS distance into
+    a similarity score.
     """
 
-    score = 0
-
-    for query_relation in query_relationships:
-
-        for chunk_relation in chunk_relationships:
-
-            if (
-
-                query_relation["relation"] ==
-
-                chunk_relation["relation"]
-
-            ):
-
-                score += 2
-
-            if (
-
-                query_relation["subject"].lower()
-
-                ==
-
-                chunk_relation["subject"].lower()
-
-            ):
-
-                score += 1
-
-            if (
-
-                query_relation["object"].lower()
-
-                ==
-
-                chunk_relation["object"].lower()
-
-            ):
-
-                score += 1
-
-    return score
+    return 1 / (1 + distance)
 
 
 # ==========================================================
-# Combined Ranking Score
+# Combined Score
 # ==========================================================
 
-def compute_final_score(
-
-    semantic_distance,
-
-    entity_match,
-
-    relationship_match
-
+def calculate_final_score(
+    semantic_score,
+    entity_score
 ):
     """
-    Lower FAISS distance means
-    higher semantic similarity.
+    Combine semantic similarity
+    and entity matching score.
     """
 
-    semantic_score = 1 / (
+    return semantic_score + entity_score
 
-        1 + semantic_distance
-
-    )
-
-    final_score = (
-
-        semantic_score
-
-        + entity_match
-
-        + relationship_match
-
-    )
-
-    return round(final_score, 4)
 
 # ==========================================================
-# Intelligent Re-ranking
+# Entity-aware Re-ranking
 # ==========================================================
 
 def rerank_chunks(
@@ -382,63 +232,73 @@ def rerank_chunks(
     retrieved_chunks
 ):
     """
-    Re-rank retrieved chunks using:
-    1. Semantic similarity
-    2. Entity matching
-    3. Relationship matching
+    Re-rank retrieved chunks
+    using semantic similarity
+    and entity overlap.
     """
 
     query_entities = extract_entities(query)
 
-    query_relationships = extract_relationships(query)
-
-    final_results = []
+    ranked_results = []
 
     for item in retrieved_chunks:
 
         chunk = item["chunk"]
 
-        distance = item["distance"]
+        if isinstance(chunk, dict):
+            chunk_text = chunk.get("text", "")
+        else:
+            chunk_text = str(chunk)
 
-        chunk_entities = extract_entities(chunk)
+        chunk_entities = extract_entities(chunk_text)
 
-        chunk_relationships = extract_relationships(chunk)
+        semantic_score = calculate_semantic_score(
 
-        entity_match = entity_score(
+            item["distance"]
+
+        )
+
+        entity_score = calculate_entity_score(
+
             query_entities,
+
             chunk_entities
+
         )
 
-        relationship_match = relationship_score(
-            query_relationships,
-            chunk_relationships
+        final_score = calculate_final_score(
+
+            semantic_score,
+
+            entity_score
+
         )
 
-        final_score = compute_final_score(
-            distance,
-            entity_match,
-            relationship_match
-        )
-
-        final_results.append({
+        ranked_results.append({
 
             "chunk": chunk,
 
-            "distance": distance,
+            "index": item["index"],
 
-            "entity_score": entity_match,
+            "distance": item["distance"],
 
-            "relationship_score": relationship_match,
+            "semantic_score": round(
+                semantic_score,
+                4
+            ),
 
-            "final_score": final_score,
+            "entity_score": entity_score,
 
-            "entities": chunk_entities,
+            "final_score": round(
+                final_score,
+                4
+            ),
 
-            "relationships": chunk_relationships
+            "entities": chunk_entities
 
         })
 
-    final_results.sort(
+    ranked_results.sort(
 
         key=lambda x: x["final_score"],
 
@@ -446,27 +306,74 @@ def rerank_chunks(
 
     )
 
-    return final_results
+    return ranked_results
 
 
 # ==========================================================
-# Retrieval Pipeline
+# Remove Duplicate Chunks
+# ==========================================================
+
+def remove_duplicates(ranked_results):
+    """
+    Remove duplicate chunks while preserving ranking.
+    """
+
+    unique_chunks = set()
+    filtered_results = []
+
+    for result in ranked_results:
+
+        # ---------------------------
+        # Normalize chunk to string
+        # ---------------------------
+        chunk = result.get("chunk")
+
+        if isinstance(chunk, dict):
+            chunk_text = chunk.get("text", "")
+        else:
+            chunk_text = str(chunk)
+
+        chunk_text = chunk_text.strip()
+
+        # ---------------------------
+        # Deduplication check
+        # ---------------------------
+        if chunk_text in unique_chunks:
+            continue
+
+        unique_chunks.add(chunk_text)
+
+        # ---------------------------
+        # Store cleaned result
+        # ---------------------------
+        filtered_results.append({
+            **result,
+            "chunk": chunk_text
+        })
+
+    return filtered_results
+# ==========================================================
+# Complete Retrieval Pipeline
 # ==========================================================
 
 def retrieve(
-    query,
+    query: str,
     top_k=10
 ):
     """
     Complete retrieval pipeline.
     """
 
+    # Load vector database
     index = load_faiss_index()
 
+    # Load stored chunks
     chunks = load_chunks()
 
+    # Convert query into embedding
     query_embedding = embed_query(query)
 
+    # Semantic search
     distances, indices = search_index(
 
         index,
@@ -477,6 +384,7 @@ def retrieve(
 
     )
 
+    # Retrieve chunk text
     retrieved_chunks = retrieve_chunks(
 
         chunks,
@@ -487,11 +395,19 @@ def retrieve(
 
     )
 
+    # Entity-aware ranking
     ranked_results = rerank_chunks(
 
         query,
 
         retrieved_chunks
+
+    )
+
+    # Remove duplicates
+    ranked_results = remove_duplicates(
+
+        ranked_results
 
     )
 
@@ -502,18 +418,26 @@ def retrieve(
 # Display Results
 # ==========================================================
 
-def display_results(results):
+def display_results(
+    ranked_results
+):
     """
-    Display ranked retrieval results.
+    Display retrieval results.
     """
 
     print("\nFinal Retrieval Results")
 
     print("=" * 70)
 
+    if len(ranked_results) == 0:
+
+        print("\nNo relevant chunks found.")
+
+        return
+
     for rank, result in enumerate(
 
-        results,
+        ranked_results,
 
         start=1
 
@@ -523,13 +447,35 @@ def display_results(results):
 
         print("-" * 70)
 
-        print(f"Final Score        : {result['final_score']:.4f}")
+        print(
 
-        print(f"Semantic Distance  : {result['distance']:.4f}")
+            f"Chunk Index      : {result['index']}"
 
-        print(f"Entity Score       : {result['entity_score']}")
+        )
 
-        print(f"Relationship Score : {result['relationship_score']}")
+        print(
+
+            f"Semantic Distance: {result['distance']:.4f}"
+
+        )
+
+        print(
+
+            f"Semantic Score   : {result['semantic_score']:.4f}"
+
+        )
+
+        print(
+
+            f"Entity Score     : {result['entity_score']}"
+
+        )
+
+        print(
+
+            f"Final Score      : {result['final_score']:.4f}"
+
+        )
 
         print("\nChunk")
 
@@ -537,35 +483,50 @@ def display_results(results):
 
         print("\nEntities")
 
-        for entity in result["entities"]:
+        if result["entities"]:
 
-            print(
-
-                f"  {entity['text']}"
-
-                f" ({entity['label']})"
-
-            )
-
-        print("\nRelationships")
-
-        if result["relationships"]:
-
-            for relation in result["relationships"]:
+            for entity in result["entities"]:
 
                 print(
 
-                    f"  {relation['subject']}"
+                    f"- {entity['text']} "
 
-                    f" --[{relation['relation']}]--> "
-
-                    f"{relation['object']}"
+                    f"({entity['label']})"
 
                 )
 
         else:
 
-            print("  None")
+            print("No entities found.")
+
+        print("\n" + "=" * 70)
+
+
+# ==========================================================
+# Return Only Chunk Text
+# ==========================================================
+
+def get_context(
+    ranked_results,
+    max_chunks=5
+):
+    """
+    Return only chunk text.
+    Useful for relationship extraction
+    and LLM generation.
+    """
+
+    context = []
+
+    for result in ranked_results[:max_chunks]:
+
+        context.append(
+
+            result["chunk"]
+
+        )
+
+    return context
 
 # ==========================================================
 # Main
@@ -588,12 +549,54 @@ if __name__ == "__main__":
 
             break
 
-        results = retrieve(
+        # --------------------------------------------------
+        # Retrieve Results
+        # --------------------------------------------------
+
+        ranked_results = retrieve(
+
             query,
+
             top_k=10
+
         )
 
-        display_results(results)
+        # --------------------------------------------------
+        # Display Results
+        # --------------------------------------------------
 
-        print("\n" + "=" * 70)
-        print("Retrieval Complete.")
+        display_results(
+
+            ranked_results
+
+        )
+
+        # --------------------------------------------------
+        # Context for Downstream Modules
+        # --------------------------------------------------
+
+        context = get_context(
+
+            ranked_results,
+
+            max_chunks=5
+
+        )
+
+        print("\nContext Passed to Next Module")
+        print("=" * 70)
+
+        for i, chunk in enumerate(
+
+            context,
+
+            start=1
+
+        ):
+
+            print(f"\nChunk {i}")
+
+            print(chunk)
+
+        print("\nRetriever Finished.")
+        print("=" * 70)
