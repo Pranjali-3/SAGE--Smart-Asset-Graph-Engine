@@ -6,7 +6,7 @@ from typing import List, Dict
 from transformers import pipeline
 
 # ==========================================================
-# Logging
+# Logging Configuration
 # ==========================================================
 
 logging.basicConfig(
@@ -24,7 +24,7 @@ nlp = spacy.load("en_core_web_sm")
 
 logging.info("spaCy model loaded.")
 
-logging.info("Loading BERT model...")
+logging.info("Loading BERT NER model...")
 
 bert_ner = pipeline(
     "ner",
@@ -39,6 +39,9 @@ logging.info("BERT model loaded.")
 # ==========================================================
 
 def extract_spacy_entities(text: str) -> List[Dict]:
+    """
+    Extract entities using spaCy.
+    """
 
     doc = nlp(text)
 
@@ -62,6 +65,9 @@ def extract_spacy_entities(text: str) -> List[Dict]:
 # ==========================================================
 
 def extract_bert_entities(text: str) -> List[Dict]:
+    """
+    Extract entities using BERT.
+    """
 
     results = bert_ner(text)
 
@@ -81,10 +87,12 @@ def extract_bert_entities(text: str) -> List[Dict]:
 
 
 # ==========================================================
-# Regex Patterns
+# Industrial Regex Patterns
 # ==========================================================
 
 REGEX_PATTERNS = {
+
+    # Equipment IDs
 
     "PUMP": r"\bP-\d+\b",
 
@@ -96,14 +104,56 @@ REGEX_PATTERNS = {
 
     "TEMPERATURE_SENSOR": r"\bTT-\d+\b",
 
+    "FLOW_SENSOR": r"\bFT-\d+\b",
+
+    "LEVEL_SENSOR": r"\bLT-\d+\b",
+
+    "COMPRESSOR": r"\bCOMP-\d+\b",
+
+    "ENGINE": r"\bENGINE-\d+\b",
+
+    "TURBINE": r"\bTURB-\d+\b",
+
     "SOP": r"\bSOP-\d+\b",
 
-    "DOCUMENT": r"\bDOC-\d+(?:-\d+)?\b"
+    "DOCUMENT": r"\bDOC-\d+(?:-\d+)?\b",
 
+
+    # Industrial Documents
+
+    "DOCUMENT": r"\bDOC-\d+(?:-\d+)?\b",
+
+    "SOP": r"\bSOP-\d+\b",
+
+    "MANUAL": r"\bMAN-\d+\b",
+
+    # NASA Files
+
+    "NASA_DATASET": r"\bFD00[1-4]\b",
+
+    # Failure Codes
+
+    "FAULT_CODE": r"\bFC-\d+\b",
+
+    # NASA C-MAPSS
+    "ENGINE": r"\bEngine\s*\d+\b",
+
+    "CYCLE": r"\bcycle\s*\d+\b",
+
+    "SENSOR": r"\bS\d{1,2}\b",
+    
+    "SETTING": r"\bsetting\s*\d+\b"
 }
 
 
-def extract_regex_entities(text: str) -> List[Dict]:
+# ==========================================================
+# Regex Entity Extraction
+# ==========================================================
+
+def extract_regex_entities(text: str) ->List[Dict]:
+    """
+    Extract industrial entities using regex.
+    """
 
     entities = []
 
@@ -130,44 +180,120 @@ def extract_regex_entities(text: str) -> List[Dict]:
 
 LABEL_MAPPING = {
 
+    # spaCy / BERT labels
+
     "PER": "PERSON",
+
     "PERSON": "PERSON",
 
     "ORG": "ORGANIZATION",
 
     "LOC": "LOCATION",
+
     "GPE": "LOCATION",
 
     "DATE": "DATE",
+
+    "TIME": "TIME",
 
     "NORP": "GROUP",
 
     "MISC": "MISC",
 
+    # Industrial labels
+
     "PUMP": "PUMP",
+
     "VALVE": "VALVE",
+
     "MOTOR": "MOTOR",
+
     "PRESSURE_SENSOR": "PRESSURE_SENSOR",
+
     "TEMPERATURE_SENSOR": "TEMPERATURE_SENSOR",
+
+    "FLOW_SENSOR": "FLOW_SENSOR",
+
+    "LEVEL_SENSOR": "LEVEL_SENSOR",
+
+    "COMPRESSOR": "COMPRESSOR",
+
+    "ENGINE": "ENGINE",
+
+    "CYCLE": "CYCLE",
+    
+    "SENSOR": "SENSOR",
+    
+    "SETTING": "SETTING",
+
+    "TURBINE": "TURBINE",
+
     "DOCUMENT": "DOCUMENT",
-    "SOP": "SOP"
+
+    "SOP": "SOP",
+
+    "MANUAL": "MANUAL",
+
+    "FAULT_CODE": "FAULT_CODE",
+
+    "NASA_DATASET": "NASA_DATASET"
 
 }
+
+
+# ==========================================================
+# Label Priority
+# ==========================================================
 
 LABEL_PRIORITY = {
 
     "PUMP": 100,
+
     "VALVE": 100,
+
     "MOTOR": 100,
+
     "PRESSURE_SENSOR": 100,
+
     "TEMPERATURE_SENSOR": 100,
+
+    "FLOW_SENSOR": 100,
+
+    "LEVEL_SENSOR": 100,
+
+    "COMPRESSOR": 100,
+
+    "ENGINE": 100,
+
+    "TURBINE": 100,
+
     "DOCUMENT": 100,
+
     "SOP": 100,
 
+    "MANUAL": 100,
+
+    "FAULT_CODE": 100,
+
+    "NASA_DATASET": 100,
+
+    "ENGINE": 100,
+    
+    "CYCLE": 100,
+    
+    "SENSOR": 100,
+    
+    "SETTING": 100,
+
     "PERSON": 90,
+
     "ORGANIZATION": 90,
+
     "LOCATION": 90,
+
     "DATE": 90,
+
+    "TIME": 90,
 
     "GROUP": 60,
 
@@ -177,28 +303,35 @@ LABEL_PRIORITY = {
 
 
 # ==========================================================
-# Confidence Scores
+# Confidence Weights
 # ==========================================================
 
 SOURCE_WEIGHTS = {
 
     "regex": 1.00,
+
     "spacy": 0.90,
+
     "bert": 0.85
 
 }
-
 
 # ==========================================================
 # Utility Functions
 # ==========================================================
 
 def normalize_label(label: str):
+    """
+    Convert different labels into a common format.
+    """
 
     return LABEL_MAPPING.get(label, label)
 
 
 def normalize_text(text: str):
+    """
+    Clean entity text.
+    """
 
     text = text.strip()
 
@@ -214,6 +347,10 @@ def normalize_text(text: str):
 # ==========================================================
 
 def merge_entities(*entity_lists):
+    """
+    Merge entities extracted from Regex,
+    spaCy and BERT.
+    """
 
     merged = {}
 
@@ -222,7 +359,9 @@ def merge_entities(*entity_lists):
         for entity in entity_list:
 
             text = normalize_text(entity["text"])
+
             label = normalize_label(entity["label"])
+
             source = entity["source"]
 
             key = text.lower()
@@ -232,7 +371,9 @@ def merge_entities(*entity_lists):
                 merged[key] = {
 
                     "text": text,
+
                     "labels": [label],
+
                     "sources": [source]
 
                 }
@@ -240,9 +381,11 @@ def merge_entities(*entity_lists):
             else:
 
                 if label not in merged[key]["labels"]:
+
                     merged[key]["labels"].append(label)
 
                 if source not in merged[key]["sources"]:
+
                     merged[key]["sources"].append(source)
 
     return list(merged.values())
@@ -253,6 +396,9 @@ def merge_entities(*entity_lists):
 # ==========================================================
 
 def resolve_best_label(labels):
+    """
+    Select the highest priority label.
+    """
 
     best = labels[0]
 
@@ -266,10 +412,13 @@ def resolve_best_label(labels):
 
 
 # ==========================================================
-# Confidence
+# Confidence Calculation
 # ==========================================================
 
 def calculate_confidence(sources):
+    """
+    Calculate confidence from extraction sources.
+    """
 
     score = 0
 
@@ -283,56 +432,122 @@ def calculate_confidence(sources):
 
 
 # ==========================================================
-# Intelligent Filtering
+# Noise Filtering
 # ==========================================================
 
 BLACKLIST = {
 
     "refer",
-    "valve",
+
+    "section",
+
+    "table",
+
+    "figure",
+
+    "fig",
+
+    "sensor",
+
     "pump",
+
     "motor",
-    "sensor"
+
+    "valve",
+
+    "engine",
+
+    "compressor",
+
+    "system",
+
+    "unit",
+
+    "equipment"
 
 }
 
 
-def is_valid_entity(entity):
+# ==========================================================
+# Entity Validation
+# ==========================================================
 
-    text = entity["text"]
+def is_valid_entity(entity):
+    """
+    Remove low-quality entities.
+    """
+
+    text = entity["text"].strip()
+
+    label = entity["label"]
+
+    # Very short words
 
     if len(text) <= 1:
+
         return False
 
-    if re.search(r"\b[A-Z]$", text):
+    # Punctuation only
+
+    if re.fullmatch(r"[-.,:;()]+", text):
+
         return False
 
-    if entity["label"] == "MISC" and len(text) < 5:
+    # Single capital letter
+
+    if re.fullmatch(r"[A-Z]", text):
+
         return False
 
-    if re.fullmatch(r"[-.,]+", text):
+    # Tiny miscellaneous words
+
+    if label == "MISC" and len(text) < 5:
+
+        return False
+
+    # Pure numbers
+
+    if text.isdigit():
+
         return False
 
     return True
 
 
+# ==========================================================
+# Final Filtering
+# ==========================================================
+
 def filter_entities(entities):
+    """
+    Remove duplicate and noisy entities.
+    """
 
     filtered = []
+
+    seen = set()
 
     for entity in entities:
 
         text = entity["text"].strip()
 
-        if text.lower() in BLACKLIST:
+        key = text.lower()
+
+        if key in BLACKLIST:
+
+            continue
+
+        if key in seen:
+
             continue
 
         if is_valid_entity(entity):
 
             filtered.append(entity)
 
-    return filtered
+            seen.add(key)
 
+    return filtered
 
 # ==========================================================
 # Public Entity Extraction Function
@@ -340,71 +555,99 @@ def filter_entities(entities):
 
 def extract_entities(text: str):
     """
-    Extract entities using spaCy, BERT and Regex.
-    Returns the final cleaned entity list.
+    Extract entities using Regex + spaCy + BERT.
+    Returns a cleaned entity list.
     """
 
-    # Extract entities from all sources
-    spacy_entities = extract_spacy_entities(text)
-    bert_entities = extract_bert_entities(text)
+    # ------------------------------------------------------
+    # Extract entities from all models
+    # ------------------------------------------------------
+
     regex_entities = extract_regex_entities(text)
 
-    # Merge entities
+    spacy_entities = extract_spacy_entities(text)
+
+    bert_entities = extract_bert_entities(text)
+
+    # ------------------------------------------------------
+    # Merge
+    # ------------------------------------------------------
+
     merged_entities = merge_entities(
+        regex_entities,
         spacy_entities,
-        bert_entities,
-        regex_entities
+        bert_entities
     )
 
     final_entities = []
 
-    # Resolve labels and confidence
     for entity in merged_entities:
 
         final_entities.append({
 
             "text": entity["text"],
 
-            "label": resolve_best_label(entity["labels"]),
+            "label": resolve_best_label(
+                entity["labels"]
+            ),
 
             "sources": entity["sources"],
 
-            "confidence": calculate_confidence(entity["sources"])
+            "confidence": calculate_confidence(
+                entity["sources"]
+            )
 
         })
 
+    # ------------------------------------------------------
     # Remove noisy entities
+    # ------------------------------------------------------
+
     final_entities = filter_entities(final_entities)
 
     return final_entities
 
 
 # ==========================================================
-# Main
+# Main (Testing)
 # ==========================================================
 
 if __name__ == "__main__":
 
-    text = """
-John repaired Pump P-101
-and Valve VLV-203
-at Microsoft
-on 12 June 2026
-in Noida.
+    sample_text = """
+    Engine 5 completed cycle 145.
 
-Pressure sensor PT-201 failed.
+    Sensor S12 detected abnormal vibration.
 
-Motor MTR-05 overheated.
+    Sensor S7 temperature increased.
 
-Refer SOP-001.
+    Operational setting 2 changed.
 
-Document DOC-2025-01.
-"""
+    Pump P-101 overheated.
 
-    final_entities = extract_entities(text)
+    Valve VLV-203 leaked.
 
-    print("\nFinal Entities")
-    print("-" * 50)
+    Motor MTR-05 failed.
 
-    for entity in final_entities:
-        print(entity)
+    Pressure sensor PT-201 malfunctioned.
+
+    Refer SOP-001.
+
+    Document DOC-2025-01.
+
+    John repaired Pump P-101 at Microsoft
+    on 12 June 2026 in Noida.
+    """
+
+    entities = extract_entities(sample_text)
+
+    print("\nDetected Entities")
+    print("=" * 70)
+
+    for entity in entities:
+
+        print(
+            f"{entity['text']:25}"
+            f"{entity['label']:25}"
+            f"{entity['confidence']}"
+        )

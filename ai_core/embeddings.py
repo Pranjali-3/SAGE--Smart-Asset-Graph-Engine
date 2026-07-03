@@ -4,6 +4,9 @@ import numpy as np
 import pickle
 import logging
 import spacy
+import os
+
+from ingestion import ingest_document
 
 # ==========================================================
 # Logging Configuration
@@ -48,8 +51,13 @@ def split_into_sentences(text: str):
     doc = nlp(text)
 
     return [
+
         sent.text.strip()
+
         for sent in doc.sents
+
+        if sent.text.strip()
+
     ]
 
 
@@ -59,10 +67,10 @@ def split_into_sentences(text: str):
 
 def build_chunks(
     text: str,
-    max_chars: int = 150
+    max_chars: int = 300
 ):
     """
-    Combine multiple sentences into chunks.
+    Combine sentences into chunks.
     """
 
     sentences = split_into_sentences(text)
@@ -79,7 +87,9 @@ def build_chunks(
 
         else:
 
-            chunks.append(current_chunk.strip())
+            if current_chunk:
+
+                chunks.append(current_chunk.strip())
 
             current_chunk = sentence + " "
 
@@ -96,12 +106,17 @@ def build_chunks(
 
 def generate_embeddings(chunks):
     """
-    Convert text chunks into embedding vectors.
+    Convert chunks into embedding vectors.
     """
 
     embeddings = embedding_model.encode(
+
         chunks,
-        convert_to_numpy=True
+
+        convert_to_numpy=True,
+
+        show_progress_bar=True
+
     )
 
     return embeddings.astype("float32")
@@ -111,9 +126,11 @@ def generate_embeddings(chunks):
 # Build FAISS Index
 # ==========================================================
 
-def build_faiss_index(embeddings):
+def build_faiss_index(
+    embeddings
+):
     """
-    Create a FAISS vector database.
+    Build FAISS vector database.
     """
 
     dimension = embeddings.shape[1]
@@ -134,7 +151,7 @@ def save_faiss_index(
     filename="data/faiss.index"
 ):
     """
-    Save FAISS index to disk.
+    Save FAISS index.
     """
 
     faiss.write_index(index, filename)
@@ -151,7 +168,7 @@ def save_chunks(
     filename="data/chunks.pkl"
 ):
     """
-    Save original chunks for retrieval.
+    Save chunks with metadata.
     """
 
     with open(filename, "wb") as file:
@@ -162,81 +179,205 @@ def save_chunks(
 
 
 # ==========================================================
+# Process Dataset Folder
+# ==========================================================
+
+def process_dataset(folder_path):
+    """
+    Read every supported document from the dataset
+    and convert it into chunks.
+    """
+
+    all_chunks = []
+
+    supported_extensions = (
+
+        ".pdf",
+        ".docx",
+        ".xlsx",
+        ".csv",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".txt"
+
+    )
+
+    for file in sorted(os.listdir(folder_path)):
+
+        path = os.path.join(folder_path, file)
+
+        if not os.path.isfile(path):
+
+            continue
+
+        if not file.lower().endswith(supported_extensions):
+
+            continue
+
+        logging.info(f"Processing {file}")
+
+        try:
+
+            text = ingest_document(path)
+
+            if text is None:
+
+                continue
+
+            text = str(text).strip()
+
+            if len(text) == 0:
+
+                continue
+
+            document_chunks = build_chunks(text)
+
+            logging.info(
+                f"{len(document_chunks)} chunks created."
+            )
+
+            for chunk in document_chunks:
+
+                all_chunks.append({
+
+                    "text": chunk,
+
+                    "source": file
+
+                })
+
+        except Exception as e:
+
+            logging.warning(
+
+                f"Skipping {file}: {e}"
+
+            )
+
+    return all_chunks
+
+# ==========================================================
 # Main
 # ==========================================================
 
 if __name__ == "__main__":
 
-    text = """
-    Pump P-101 is overheating.
-
-    Pressure Sensor PT-201 has failed.
-
-    Motor MTR-05 should be replaced.
-
-    Valve VLV-203 is leaking.
-
-    Operator John repaired Pump P-101 yesterday.
-    """
+    print("\nIndustrial Knowledge Embedding Pipeline")
+    print("=" * 70)
 
     # ------------------------------------------------------
-    # Build Chunks
+    # Dataset Folder
     # ------------------------------------------------------
 
-    chunks = build_chunks(text)
+    dataset_folder = r"data\nasa\archive\CMaps"
 
-    print("\nChunks")
-    print("-" * 60)
+    if not os.path.exists(dataset_folder):
 
-    for i, chunk in enumerate(chunks, start=1):
+        raise FileNotFoundError(
 
-        print(f"\nChunk {i}")
+            f"Dataset folder not found:\n{dataset_folder}"
 
-        print(chunk)
+        )
+
+    # ------------------------------------------------------
+    # Read Every Document
+    # ------------------------------------------------------
+
+    all_chunks = process_dataset(dataset_folder)
+
+    print("\nDataset Summary")
+    print("-" * 70)
+
+    print(f"Total Chunks : {len(all_chunks)}")
+
+    if len(all_chunks) == 0:
+
+        raise ValueError("No chunks were created.")
+
+    # ------------------------------------------------------
+    # Preview Chunks
+    # ------------------------------------------------------
+
+    print("\nChunk Preview")
+    print("-" * 70)
+
+    preview = min(5, len(all_chunks))
+
+    for i in range(preview):
+
+        print(f"\nChunk {i+1}")
+
+        print(f"Source : {all_chunks[i]['source']}")
+
+        print(all_chunks[i]["text"][:250])
+
+    # ------------------------------------------------------
+    # Extract Text Only
+    # ------------------------------------------------------
+
+    chunk_texts = [
+
+        chunk["text"]
+
+        for chunk in all_chunks
+
+    ]
 
     # ------------------------------------------------------
     # Generate Embeddings
     # ------------------------------------------------------
 
-    embeddings = generate_embeddings(chunks)
+    print("\nGenerating Embeddings...")
+    print("-" * 70)
 
-    print("\nEmbeddings")
-    print("-" * 60)
+    embeddings = generate_embeddings(chunk_texts)
 
-    for i, embedding in enumerate(embeddings, start=1):
+    print("Embedding Shape :", embeddings.shape)
 
-        print(f"\nChunk {i}")
-
-        print(f"Vector Length : {len(embedding)}")
-
-        print("First 10 Values:")
-
-        print(embedding[:10])
+    print("Embedding Dimension :", embeddings.shape[1])
 
     # ------------------------------------------------------
     # Build FAISS Index
     # ------------------------------------------------------
 
+    print("\nBuilding FAISS Index...")
+    print("-" * 70)
+
     index = build_faiss_index(embeddings)
 
-    print("\nFAISS Index")
-    print("-" * 60)
-
-    print("Number of vectors:", index.ntotal)
+    print("Vectors Stored :", index.ntotal)
 
     # ------------------------------------------------------
-    # Save Files
+    # Save Database
     # ------------------------------------------------------
 
     save_faiss_index(index)
 
-    save_chunks(chunks)
+    save_chunks(all_chunks)
+
+    # ------------------------------------------------------
+    # Finished
+    # ------------------------------------------------------
 
     print("\nVector Database Created Successfully!")
 
     print("\nSaved Files")
-    print("-" * 60)
+    print("-" * 70)
 
     print("data/faiss.index")
 
     print("data/chunks.pkl")
+
+    print("\nDatabase Statistics")
+    print("-" * 70)
+
+    print(f"Documents Processed : {len(set(chunk['source'] for chunk in all_chunks))}")
+
+    print(f"Total Chunks        : {len(all_chunks)}")
+
+    print(f"Embedding Size      : {embeddings.shape[1]}")
+
+    print(f"Vectors in FAISS    : {index.ntotal}")
+
+    print("\nEmbedding Pipeline Complete.")
