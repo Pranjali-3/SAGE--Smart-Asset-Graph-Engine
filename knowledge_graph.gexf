@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
+  <meta lastmodifieddate="2026-07-08">
+    <creator>NetworkX 3.6.1</creator>
+  </meta>
+  <graph defaultedgetype="directed" mode="static" name="">
+    <attributes mode="static" class="edge">
+      <attribute id="0" title="relation" type="string" />
+      <attribute id="1" title="confidence" type="double" />
+      <attribute id="2" title="relation_type" type="string" />
+    </attributes>
+    <nodes>
+      <node id="P-101" label="P-101" />
+      <node id="failed" label="failed" />
+      <node id="MTR-05" label="MTR-05" />
+      <node id="PT-201" label="PT-201" />
+      <node id="fluctuations" label="fluctuations" />
+      <node id="VLV-203" label="VLV-203" />
+      <node id="leaking" label="leaking" />
+      <node id="John" label="John" />
+    </nodes>
+    <edges>
+      <edge source="P-101" target="failed" id="0">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="P-101" target="PT-201" id="1">
+        <attvalues>
+          <attvalue for="0" value="connected_to" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+      <edge source="MTR-05" target="failed" id="2">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="PT-201" target="fluctuations" id="3">
+        <attvalues>
+          <attvalue for="0" value="detected" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+      <edge source="VLV-203" target="leaking" id="4">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="John" target="P-101" id="5">
+        <attvalues>
+          <attvalue for="0" value="repaired" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+    </edges>
+  </graph>
+</gexf>

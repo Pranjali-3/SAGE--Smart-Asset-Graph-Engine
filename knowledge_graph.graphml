@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d2" for="edge" attr.name="relation_type" attr.type="string"/>
+<key id="d1" for="edge" attr.name="confidence" attr.type="double"/>
+<key id="d0" for="edge" attr.name="relation" attr.type="string"/>
+<graph edgedefault="directed"><node id="P-101"/>
+<node id="failed"/>
+<node id="MTR-05"/>
+<node id="PT-201"/>
+<node id="fluctuations"/>
+<node id="VLV-203"/>
+<node id="leaking"/>
+<node id="John"/>
+<edge source="P-101" target="failed">
+  <data key="d0">has_status</data>
+  <data key="d1">0.92</data>
+  <data key="d2">status</data>
+</edge>
+<edge source="P-101" target="PT-201">
+  <data key="d0">connected_to</data>
+  <data key="d1">0.95</data>
+  <data key="d2">rule</data>
+</edge>
+<edge source="MTR-05" target="failed">
+  <data key="d0">has_status</data>
+  <data key="d1">0.92</data>
+  <data key="d2">status</data>
+</edge>
+<edge source="PT-201" target="fluctuations">
+  <data key="d0">detected</data>
+  <data key="d1">0.95</data>
+  <data key="d2">rule</data>
+</edge>
+<edge source="VLV-203" target="leaking">
+  <data key="d0">has_status</data>
+  <data key="d1">0.92</data>
+  <data key="d2">status</data>
+</edge>
+<edge source="John" target="P-101">
+  <data key="d0">repaired</data>
+  <data key="d1">0.95</data>
+  <data key="d2">rule</data>
+</edge>
+</graph></graphml>
