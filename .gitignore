@@ -1,2 +1,4 @@
 env/
 .env
+models/*.pkl
+data/chunks.pkl

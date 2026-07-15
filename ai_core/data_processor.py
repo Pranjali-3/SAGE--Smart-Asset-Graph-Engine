@@ -4,6 +4,13 @@ import numpy as np
 import logging
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+)
+import joblib
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
@@ -357,7 +364,7 @@ class NASAProcessor:
         return self.df
     def prepare_ml_dataset(self):
         """
-        Prepare dataset for Machine Learning.
+        Prepare features and target for ML model.
         """
 
         logger.info("Preparing ML dataset...")
@@ -368,6 +375,7 @@ class NASAProcessor:
         drop_columns = [
             "engine_id",
             "cycle",
+            "RUL",
             "failure_label"
         ]
 
@@ -381,18 +389,21 @@ class NASAProcessor:
             if col.endswith("_status")
         ]
 
-        feature_df = self.df.drop(
-            columns=drop_columns + trend_columns + status_columns
-        )
+        drop_columns.extend(trend_columns)
+        drop_columns.extend(status_columns)
 
-        X = feature_df.drop(columns=["RUL"])
+        X = self.df.drop(columns=drop_columns)
 
-        y = feature_df["RUL"]
+        y = self.df["RUL"]
 
-        logger.info("ML dataset prepared.")
+        logger.info(f"Features shape : {X.shape}")
+        logger.info(f"Target shape   : {y.shape}")
 
         return X, y
     def split_dataset(self, X, y):
+        """
+        Split dataset into training and testing sets.
+        """
 
         logger.info("Splitting dataset...")
 
@@ -400,12 +411,85 @@ class NASAProcessor:
             X,
             y,
             test_size=0.2,
+            shuffle=False,
             random_state=42
         )
 
-        logger.info("Dataset split completed.")
+        logger.info(f"Training samples : {len(X_train)}")
+        logger.info(f"Testing samples  : {len(X_test)}")
 
         return X_train, X_test, y_train, y_test
+    def train_random_forest(
+    self,
+    X_train,
+    y_train
+):
+        """
+        Train Random Forest model.
+        """
+
+        logger.info("Training Random Forest...")
+
+        model = RandomForestRegressor(
+            n_estimators=200,
+            max_depth=20,
+            random_state=42,
+            n_jobs=-1
+        )
+
+        model.fit(X_train, y_train)
+
+        logger.info("Random Forest training completed.")
+
+        return model
+    def evaluate_model(
+    self,
+    model,
+    X_test,
+    y_test
+):
+        """
+        Evaluate trained model.
+        """
+
+        logger.info("Evaluating model...")
+
+        predictions = model.predict(X_test)
+
+        mae = mean_absolute_error(y_test, predictions)
+
+        rmse = np.sqrt(
+            mean_squared_error(y_test, predictions)
+        )
+
+        r2 = r2_score(
+            y_test,
+            predictions
+        )
+
+        print()
+        print("Model Evaluation")
+        print(f"MAE  : {mae:.3f}")
+        print(f"RMSE : {rmse:.3f}")
+        print(f"R²   : {r2:.3f}")
+
+        return predictions
+    def save_model(
+    self,
+    model,
+    filename="models/random_forest_rul.pkl"
+):
+        """
+        Save trained model.
+        """
+
+        logger.info("Saving model...")
+
+        os.makedirs("models", exist_ok=True)
+
+        joblib.dump(model, filename)
+
+        logger.info(f"Model saved to {filename}")
 
 
 if __name__ == "__main__":
@@ -529,40 +613,120 @@ if __name__ == "__main__":
         ].head(25)
     )
     print()
-print("Sensor Anomaly Detection")
-print(
-    df[
-        [
-            "engine_id",
-            "cycle",
-            "sensor_2",
-            "sensor_2_mean",
-            "sensor_2_std",
-            "sensor_2_status"
-        ]
-    ].head(25)
-)
-X, y = processor.prepare_ml_dataset()
+    print("Sensor Anomaly Detection")
+    print(
+        df[
+            [
+                "engine_id",
+                "cycle",
+                "sensor_2",
+                "sensor_2_mean",
+                "sensor_2_std",
+                "sensor_2_status"
+            ]
+        ].head(25)
+    )
+    X, y = processor.prepare_ml_dataset()
 
-print()
-print("Feature Matrix Shape")
-print(X.shape)
+    X_train, X_test, y_train, y_test = processor.split_dataset(X, y)
 
-print()
-print("Target Shape")
-print(y.shape)
+    rf_model = processor.train_random_forest(
+        X_train,
+        y_train
+    )
 
-print()
-print(X.head())
-X, y = processor.prepare_ml_dataset()
+    processor.evaluate_model(
+        rf_model,
+        X_test,
+        y_test
+    )
 
-X_train, X_test, y_train, y_test = processor.split_dataset(X, y)
+    processor.save_model(rf_model)
+    output_path = "data/nasa/processed_nasa.csv"
 
-print()
-print("Training Features:", X_train.shape)
-print("Testing Features :", X_test.shape)
+    df.to_csv(output_path, index=False)
 
-print()
+    print(f"\nProcessed dataset saved to {output_path}")
+    df = pd.read_csv("data/nasa/processed_nasa.csv")
+    drop_columns = [
 
-print("Training Labels :", y_train.shape)
-print("Testing Labels  :", y_test.shape)
+        "engine_id",
+
+        "cycle",
+
+        "RUL",
+
+        "failure_label"
+
+    ]
+
+    # remove trend and status columns (strings)
+
+    drop_columns += [
+
+        c for c in df.columns
+
+        if c.endswith("_trend")
+
+        or c.endswith("_status")
+
+    ]
+
+    X = df.drop(columns=drop_columns)
+
+    y = df["RUL"]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+
+        X,
+        y,
+
+        test_size=0.2,
+
+        random_state=42
+
+    )
+    model = RandomForestRegressor(
+
+        n_estimators=200,
+
+        random_state=42,
+
+        n_jobs=-1
+
+    )
+
+    model.fit(
+
+        X_train,
+
+        y_train
+
+    )
+    predictions = model.predict(X_test)
+    mae = mean_absolute_error(y_test, predictions)
+
+    mse = mean_squared_error(y_test, predictions)
+
+    rmse = mse ** 0.5
+
+    r2 = r2_score(y_test, predictions)
+
+    print()
+
+    print("Model Performance")
+
+    print(f"MAE : {mae:.2f}")
+
+    print(f"RMSE: {rmse:.2f}")
+
+    print(f"R²  : {r2:.4f}")
+    joblib.dump(
+
+        model,
+
+        "models/random_forest_rul.pkl"
+
+    )
+
+    print("Model saved successfully.")

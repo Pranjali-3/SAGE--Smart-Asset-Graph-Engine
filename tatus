@@ -1,0 +1,14 @@
+* [33m214eb2b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Add ML models
+* [33m00080e5[m use of baseline models
+* [33m189bde0[m[33m ([m[1;31morigin/main[m[33m)[m initialise api(flask)
+* [33m2ae6289[m update README.md
+* [33mbf257df[m dataset data processing
+* [33m7454cc2[m trial
+* [33m22fb295[m dataset data processing
+* [33mfe3b3bb[m knowledge graph and relationship extractor
+* [33mc0a1fad[m relationship_extractor and retrieving data
+* [33m163a74b[m adding real nasa datset
+* [33mccdf224[m retrieving data via chatbot
+* [33m4dc6e36[m added embeddings to the chunks
+* [33m22c321b[m merging of all ner extracting models
+* [33m6bfc82d[m Initial commit - clean and light
