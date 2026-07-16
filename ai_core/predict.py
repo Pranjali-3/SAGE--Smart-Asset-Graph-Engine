@@ -28,11 +28,27 @@ class Predictor:
         )
     def preprocess(self, data):
 
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, dict):
+            data = pd.DataFrame([data])
+
+        # If engineered features already exist,
+        # just reorder them.
+        if set(self.feature_columns).issubset(data.columns):
             return data[self.feature_columns]
 
-        if isinstance(data, dict):
-            return pd.DataFrame([data])[self.feature_columns]
+        # Otherwise create them.
+
+        sensor_cols = [f"sensor_{i}" for i in range(1, 22)]
+
+        data["health_index"] = 1 - data[sensor_cols].mean(axis=1)
+
+        for i in range(1, 22):
+
+            data[f"sensor_{i}_mean"] = data[f"sensor_{i}"]
+
+            data[f"sensor_{i}_std"] = 0.0
+
+        return data[self.feature_columns]
     def predict_rul(self, data):
 
         X = self.preprocess(data)
