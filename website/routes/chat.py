@@ -16,11 +16,9 @@ def chat():
         if query:
             result = search_knowledge(query)
             answer = result
-
-            # Save to DB (basic: one session per request for now)
             session = Session()
             db.session.add(session)
-            db.session.flush()  # get session.id before commit
+            db.session.flush()  
 
             db.session.add(Message(session_id=session.id, role="user", content=query))
             db.session.add(Message(

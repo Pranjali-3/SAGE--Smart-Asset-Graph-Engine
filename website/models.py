@@ -12,14 +12,14 @@ class Session(db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.Integer, db.ForeignKey("session.id"), nullable=False)
-    role = db.Column(db.String(10))       # "user" or "assistant"
+    role = db.Column(db.String(10))       
     content = db.Column(db.Text)
-    sources = db.Column(db.Text)          # JSON string of cited chunks
+    sources = db.Column(db.Text)          
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(255))
-    status = db.Column(db.String(20), default="pending")  # pending / ingested / failed
+    status = db.Column(db.String(20), default="pending")
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
