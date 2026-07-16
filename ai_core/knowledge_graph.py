@@ -594,47 +594,52 @@ class KnowledgeGraph:
 
         plt.show()
 
-    def build_prediction_graph(self,prediction,reasons,recommendations):
-
+    def build_prediction_graph(
+    self,
+    prediction,
+    explanations,
+    recommendations
+):
         """
-        Build graph from AI prediction results.
+        Build an explainable prediction graph.
         """
 
         self.graph.clear()
 
-        # --------------------------
-        # Engine
-        # --------------------------
+        status = prediction["Failure Status"]
+        rul = prediction["Remaining Useful Life"]
+
+        # ====================================================
+        # Asset
+        # ====================================================
 
         self.graph.add_node(
             "Engine",
-            type="asset"
+            type="Asset"
         )
 
-        # --------------------------
+        # ====================================================
         # Prediction
-        # --------------------------
+        # ====================================================
 
-        status = prediction["Failure Status"]
+        prediction_node = f"Failure={status}"
 
         self.graph.add_node(
-            status,
-            type="prediction"
+            prediction_node,
+            type="Prediction"
         )
 
         self.graph.add_edge(
             "Engine",
-            status,
-            relation="predicted_as"
+            prediction_node,
+            relation="Predicted As"
         )
 
-        # --------------------------
-        # RUL
-        # --------------------------
+        # ====================================================
+        # Remaining Useful Life
+        # ====================================================
 
-        rul = prediction["Remaining Useful Life"]
-
-        rul_node = f"RUL={rul}"
+        rul_node = f"RUL={round(rul)} Cycles"
 
         self.graph.add_node(
             rul_node,
@@ -644,86 +649,162 @@ class KnowledgeGraph:
         self.graph.add_edge(
             "Engine",
             rul_node,
-            relation="estimated_life"
+            relation="Estimated Remaining Life"
         )
 
-        # --------------------------
-        # Important Sensors
-        # --------------------------
+        # ====================================================
+        # Risk Level
+        # ====================================================
 
-        for reason in reasons:
+        if status == "Critical":
+            risk = "High Risk"
+
+        elif status == "Warning":
+            risk = "Medium Risk"
+
+        else:
+            risk = "Low Risk"
+
+        self.graph.add_node(
+            risk,
+            type="Risk"
+        )
+
+        self.graph.add_edge(
+            prediction_node,
+            risk,
+            relation="Severity"
+        )
+
+        # ====================================================
+        # Important Sensors
+        # ====================================================
+
+        for reason in explanations:
 
             sensor = reason["feature"]
 
+            importance = reason["importance"]
+
             self.graph.add_node(
                 sensor,
-                type="sensor"
+                type="Sensor",
+                importance=importance
             )
 
             self.graph.add_edge(
                 "Engine",
                 sensor,
-                relation="monitored_by"
+                relation="Monitored By"
             )
 
             self.graph.add_edge(
                 sensor,
-                status,
-                relation="influences"
+                prediction_node,
+                relation= "Contributes To",
+                weight = importance
             )
 
-        # --------------------------
-        # Recommendations
-        # --------------------------
+        # ====================================================
+        # Maintenance Recommendations
+        # ====================================================
 
         for action in recommendations["actions"]:
 
             self.graph.add_node(
                 action,
-                type="recommendation"
+                type="Recommendation"
             )
 
             self.graph.add_edge(
-                status,
+                prediction_node,
                 action,
-                relation="requires"
+                relation="Recommended Action"
+            )
+
+        # ====================================================
+        # Maintenance Priority
+        # ====================================================
+
+        priority = recommendations.get("priority", "Unknown") \
+            if isinstance(recommendations, dict) else None
+
+        if priority:
+
+            self.graph.add_node(
+                priority,
+                type="Priority"
+            )
+
+            self.graph.add_edge(
+                prediction_node,
+                priority,
+                relation="Maintenance Priority"
             )
 
         logger.info("Prediction Knowledge Graph built.")
-    # ============================================================
-# DEMO
-# ============================================================
 
 if __name__ == "__main__":
 
-    prediction = {
-        "Remaining Useful Life": 110,
-        "Failure Status": "Warning"
-    }
+    from predict import Predictor
+    from explain_prediction import PredictionExplainer
+    from recommendation import RecommendationEngine
 
-    reasons = [
+    # -----------------------------
+    # Load AI modules
+    # -----------------------------
 
-        {"feature": "Fuel Flow", "importance": 0.46},
+    predictor = Predictor()
+    explainer = PredictionExplainer()
+    recommender = RecommendationEngine()
 
-        {"feature": "Vibration", "importance": 0.08},
+    # -----------------------------
+    # Example sensor input
+    # (Later Flask API will send this)
+    # -----------------------------
 
-        {"feature": "Oil Temperature", "importance": 0.05}
+    sample = {}
 
-    ]
+    sample["setting1"] = 0.0
+    sample["setting2"] = 0.0
+    sample["setting3"] = 0.0
 
-    recommendations = {
+    for i in range(1, 22):
+        sample[f"sensor_{i}"] = 0.5
 
-        "actions": [
+    # -----------------------------
+    # Make prediction
+    # -----------------------------
 
-            "Inspect fuel injectors",
+    prediction = predictor.predict(sample)
 
-            "Check bearings",
+    print("\nPrediction")
+    print(prediction)
 
-            "Inspect lubrication system"
+    # -----------------------------
+    # Explain prediction
+    # -----------------------------
 
-        ]
+    reasons = explainer.top_reasons()
 
-    }
+    print("\nTop Reasons")
+
+    for reason in reasons:
+        print(reason)
+
+    # -----------------------------
+    # Generate recommendations
+    # -----------------------------
+
+    recommendations = recommender.recommend(prediction, reasons)
+
+
+    print("\nRecommendations")
+    print(recommendations)
+
+    # -----------------------------
+    # Build Knowledge Graph
+    # -----------------------------
 
     kg = KnowledgeGraph()
 
@@ -733,15 +814,10 @@ if __name__ == "__main__":
         recommendations
     )
 
-    print()
-
-    print("Nodes")
-
+    print("\nNodes")
     print(kg.graph.nodes(data=True))
 
-    print()
-
-    print("Edges")
+    print("\nEdges")
 
     for edge in kg.graph.edges(data=True):
         print(edge)
