@@ -491,6 +491,40 @@ class NASAProcessor:
 
         logger.info(f"Model saved to {filename}")
 
+    def prepare_prediction_sample(self, engine_id, cycle):
+        """
+        Prepare a prediction sample exactly as used during training.
+        """
+
+        # Run the complete preprocessing pipeline
+        self.clean_dataset()
+        self.normalize_dataset()
+        self.calculate_health_index()
+        self.calculate_rolling_features()
+
+        row = self.df[
+            (self.df["engine_id"] == engine_id) &
+            (self.df["cycle"] == cycle)
+        ].iloc[0]
+
+        ignore = [
+            "engine_id",
+            "cycle",
+            "RUL",
+            "failure_label"
+        ]
+
+        features = [
+            col for col in self.df.columns
+            if (
+                col not in ignore
+                and not col.endswith("_trend")
+                and not col.endswith("_status")
+            )
+        ]
+
+        return row[features].to_frame().T
+
 
 if __name__ == "__main__":
 

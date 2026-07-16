@@ -593,160 +593,157 @@ class KnowledgeGraph:
         plt.axis("off")
 
         plt.show()
+
+    def build_prediction_graph(self,prediction,reasons,recommendations):
+
+        """
+        Build graph from AI prediction results.
+        """
+
+        self.graph.clear()
+
+        # --------------------------
+        # Engine
+        # --------------------------
+
+        self.graph.add_node(
+            "Engine",
+            type="asset"
+        )
+
+        # --------------------------
+        # Prediction
+        # --------------------------
+
+        status = prediction["Failure Status"]
+
+        self.graph.add_node(
+            status,
+            type="prediction"
+        )
+
+        self.graph.add_edge(
+            "Engine",
+            status,
+            relation="predicted_as"
+        )
+
+        # --------------------------
+        # RUL
+        # --------------------------
+
+        rul = prediction["Remaining Useful Life"]
+
+        rul_node = f"RUL={rul}"
+
+        self.graph.add_node(
+            rul_node,
+            type="RUL"
+        )
+
+        self.graph.add_edge(
+            "Engine",
+            rul_node,
+            relation="estimated_life"
+        )
+
+        # --------------------------
+        # Important Sensors
+        # --------------------------
+
+        for reason in reasons:
+
+            sensor = reason["feature"]
+
+            self.graph.add_node(
+                sensor,
+                type="sensor"
+            )
+
+            self.graph.add_edge(
+                "Engine",
+                sensor,
+                relation="monitored_by"
+            )
+
+            self.graph.add_edge(
+                sensor,
+                status,
+                relation="influences"
+            )
+
+        # --------------------------
+        # Recommendations
+        # --------------------------
+
+        for action in recommendations["actions"]:
+
+            self.graph.add_node(
+                action,
+                type="recommendation"
+            )
+
+            self.graph.add_edge(
+                status,
+                action,
+                relation="requires"
+            )
+
+        logger.info("Prediction Knowledge Graph built.")
     # ============================================================
 # DEMO
 # ============================================================
 
 if __name__ == "__main__":
 
-    sample_text = """
-    Pump P-101 failed after Motor MTR-05 overheated.
-    Pressure Sensor PT-201 detected abnormal pressure fluctuations.
-    Valve VLV-203 was leaking.
-    John repaired Pump P-101.
-    Pump P-101 is connected to PT-201.
-    """
+    prediction = {
+        "Remaining Useful Life": 110,
+        "Failure Status": "Warning"
+    }
 
-    print("\nExtracting relationships...\n")
+    reasons = [
 
-    relationships = extract_relationships(sample_text)
+        {"feature": "Fuel Flow", "importance": 0.46},
 
-    print(f"Relationships extracted : {len(relationships)}")
+        {"feature": "Vibration", "importance": 0.08},
+
+        {"feature": "Oil Temperature", "importance": 0.05}
+
+    ]
+
+    recommendations = {
+
+        "actions": [
+
+            "Inspect fuel injectors",
+
+            "Check bearings",
+
+            "Inspect lubrication system"
+
+        ]
+
+    }
 
     kg = KnowledgeGraph()
 
-    kg.build_from_relationships(relationships)
-
-    print("\n==============================")
-    print("Knowledge Graph Statistics")
-    print("==============================")
-
-    stats = kg.graph_statistics()
-
-    print(stats)
-
-    print("\n==============================")
-    print("Neighbors")
-    print("==============================")
-
-    print(
-        kg.get_neighbors("P-101")
+    kg.build_prediction_graph(
+        prediction,
+        reasons,
+        recommendations
     )
 
-    print("\n==============================")
-    print("Parents")
-    print("==============================")
+    print()
 
-    print(
-        kg.get_parents("P-101")
-    )
+    print("Nodes")
 
-    print("\n==============================")
-    print("Children")
-    print("==============================")
+    print(kg.graph.nodes(data=True))
 
-    print(
-        kg.get_children("P-101")
-    )
+    print()
 
-    print("\n==============================")
-    print("Outgoing Relationships")
-    print("==============================")
+    print("Edges")
 
-    for rel in kg.get_outgoing_relationships("P-101"):
+    for edge in kg.graph.edges(data=True):
+        print(edge)
 
-        print(rel)
-
-    print("\n==============================")
-    print("Incoming Relationships")
-    print("==============================")
-
-    for rel in kg.get_incoming_relationships("P-101"):
-
-        print(rel)
-
-    print("\n==============================")
-    print("Shortest Path")
-    print("==============================")
-
-    print(
-
-        kg.shortest_path(
-
-            "Motor MTR-05",
-
-            "PT-201"
-
-        )
-
-    )
-
-    print("\n==============================")
-    print("Explain Connection")
-    print("==============================")
-
-    for step in kg.explain_connection(
-
-        "Motor MTR-05",
-
-        "PT-201"
-
-    ):
-
-        print(step)
-
-    print("\n==============================")
-    print("Failure Chain")
-    print("==============================")
-
-    for item in kg.failure_chain("P-101"):
-
-        print(item)
-
-    print("\n==============================")
-    print("Root Causes")
-    print("==============================")
-
-    print(
-
-        kg.find_root_causes(
-
-            "P-101"
-
-        )
-
-    )
-
-    print("\n==============================")
-    print("Equipment Status")
-    print("==============================")
-
-    print(
-
-        kg.equipment_status(
-
-            "P-101"
-
-        )
-
-    )
-
-    print("\n==============================")
-    print("Failure Report")
-    print("==============================")
-
-    report = kg.failure_report("P-101")
-
-    for key, value in report.items():
-
-        print(f"{key}: {value}")
-
-    print("\n==============================")
-    print("Exporting Graph")
-    print("==============================")
-
-    kg.export_graphml()
-
-    kg.export_gexf()
-
-    print("\nDone.")
+    kg.visualize()

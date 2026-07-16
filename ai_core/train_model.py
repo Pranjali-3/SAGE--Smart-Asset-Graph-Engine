@@ -1,6 +1,7 @@
 import os
 import logging
 import joblib
+
 import numpy as np
 import pandas as pd
 
@@ -42,24 +43,19 @@ class ModelTrainer:
         processor = NASAProcessor(self.dataset_path)
 
         processor.load_dataset()
-
         processor.clean_dataset()
-
         processor.normalize_dataset()
-
         processor.calculate_health_index()
-
         processor.calculate_rul()
-
         processor.generate_failure_labels()
-
         processor.calculate_rolling_features()
-
         processor.detect_sensor_trends()
-
         processor.detect_anomalies()
 
         self.df = processor.df
+
+        # Save features for later
+        self.X, self.y_rul, self.y_failure = self.get_features()
 
         logger.info("Dataset prepared successfully.")
     def get_features(self):
@@ -93,7 +89,9 @@ class ModelTrainer:
         return X, y_rul, y_failure
     def split_dataset(self):
 
-        X, y_rul, y_failure = self.get_features()
+        X = self.X
+        y_rul = self.y_rul
+        y_failure = self.y_failure
 
         X_train, X_test, y_rul_train, y_rul_test = train_test_split(
             X,
@@ -228,15 +226,12 @@ class ModelTrainer:
 
         os.makedirs("models", exist_ok=True)
 
-        joblib.dump(
-            self.rul_model,
-            "models/rul_model.pkl"
-        )
+        joblib.dump(self.rul_model, "models/rul_model.pkl")
+        joblib.dump(self.failure_model, "models/failure_model.pkl")
 
-        joblib.dump(
-            self.failure_model,
-            "models/failure_model.pkl"
-        )
+        # Save feature names
+        joblib.dump(self.X.columns.tolist(), "models/feature_columns.pkl")
+        joblib.dump(self.rul_model.feature_importances_,"models/feature_importance.pkl")
 
         logger.info("Models saved successfully.")
 if __name__ == "__main__":
