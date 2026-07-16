@@ -1,12 +1,13 @@
 from flask import Blueprint, render_template
+from ..models import Document, Message
 
-dashboard_bp = Blueprint('dashboard', __name__)
+dashboard_bp = Blueprint("dashboard", __name__)
 
-@dashboard_bp.route('/', methods=['GET'])
+
+@dashboard_bp.route("/")
 def dashboard():
-    stats={
-        'document': 0,
-        'entities': 0,
-        'relationship': 0
+    stats = {
+        "documents": Document.query.count(),
+        "messages": Message.query.count(),
     }
-    return render_template('dashboard.html', stats=stats)
+    return render_template("dashboard.html", stats=stats)

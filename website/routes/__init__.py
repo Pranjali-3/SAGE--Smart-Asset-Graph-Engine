@@ -13,12 +13,28 @@ def create_app():
     app = Flask(__name__)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sage.db"
-    app.config["SECRET_KEY"] = "dev"  # change later for production
+    app.config["SECRET_KEY"] = "dev"
+    app.config["UPLOAD_FOLDER"] = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "data", "uploads"
+    )
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
 
-    from .dashboard import dashboard_bp
+    # Import models BEFORE db.create_all(), so SQLAlchemy knows the tables exist
+    from . import models
+
+    from routes.dashboard import dashboard_bp
+    from routes.chat import chat_bp
+    from routes.documents import documents_bp
+    from routes.predict import predict_bp
+    from routes.entities import entities_bp
+
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(chat_bp)
+    app.register_blueprint(documents_bp)
+    app.register_blueprint(predict_bp)
+    app.register_blueprint(entities_bp)
 
     with app.app_context():
         db.create_all()
