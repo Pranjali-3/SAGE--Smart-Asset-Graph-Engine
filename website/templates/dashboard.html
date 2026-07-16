@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
-{% block head %}
-Dashboard
-{% endblock %}
 {% block body %}
-<h1 style="text-align: center; font-family:Georgia;">Dashboard</h1>
+<h1>Dashboard</h1>
+<p>Documents: {{ stats.documents }}</p>
+<p>Messages: {{ stats.messages }}</p>
 {% endblock %}

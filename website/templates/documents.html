@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block body %}
+<h1>Documents</h1>
+
+<form method="POST" action="{{ url_for('documents.upload_document') }}" enctype="multipart/form-data">
+    <input type="file" name="file">
+    <button type="submit">Upload</button>
+</form>
+
+<table>
+    <tr><th>Filename</th><th>Status</th><th>Uploaded</th></tr>
+    {% for doc in documents %}
+    <tr>
+        <td>{{ doc.filename }}</td>
+        <td>{{ doc.status }}</td>
+        <td>{{ doc.uploaded_at }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block body %}
+<h1>Predict</h1>
+
+<form method="POST">
+    <input type="number" name="engine_id" placeholder="Engine ID">
+    <input type="number" name="cycle" placeholder="Cycle">
+    <button type="submit">Predict</button>
+</form>
+
+{% if result %}
+    {% if result.success %}
+        <p>RUL: {{ result.prediction["Remaining Useful Life"] }}</p>
+        <p>Status: {{ result.prediction["Failure Status"] }}</p>
+        <h3>Top Reasons</h3>
+        <ul>
+        {% for reason in result.top_reasons %}
+            <li>{{ reason.feature }} ({{ reason.importance }})</li>
+        {% endfor %}
+        </ul>
+        <h3>Recommendation</h3>
+        <p>{{ result.recommendation.summary }}</p>
+        <ul>
+        {% for action in result.recommendation.actions %}
+            <li>{{ action }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Error: {{ result.error }}</p>
+    {% endif %}
+{% endif %}
+{% endblock %}
