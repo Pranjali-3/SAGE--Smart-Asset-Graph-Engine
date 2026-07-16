@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from ..models import Document, Message
+from website.models import Document, Message
 
 dashboard_bp = Blueprint("dashboard", __name__)
 

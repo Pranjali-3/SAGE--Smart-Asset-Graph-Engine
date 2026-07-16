@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, render_template, request, current_app
-from ..services.ai_bridge import run_prediction_pipeline
+from website.services.ai_bridge import run_prediction_pipeline
 
 predict_bp = Blueprint("predict", __name__)
 

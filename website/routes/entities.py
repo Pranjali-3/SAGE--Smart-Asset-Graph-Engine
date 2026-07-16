@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from ..services.ai_bridge import entity_report, graph_stats
+from website.services.ai_bridge import entity_report, graph_stats
 
 entities_bp = Blueprint("entities", __name__)
 

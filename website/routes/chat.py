@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request
-from ..db_extension import db
-from ..models import Session, Message
-from ..services.ai_bridge import search_knowledge
+from website.db_extension import db
+from website .models import Session, Message
+from website.services.ai_bridge import search_knowledge
 
 chat_bp = Blueprint("chat", __name__)
 

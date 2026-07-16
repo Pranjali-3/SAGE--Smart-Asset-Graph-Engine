@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, current_app
-from ..db_extension import db
-from ..models import Document
+from website.db_extension import db
+from website.models import Document
 
 documents_bp = Blueprint("documents", __name__)
 

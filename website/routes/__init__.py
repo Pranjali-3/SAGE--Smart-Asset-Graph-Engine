@@ -7,7 +7,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(os.path.dirname(__file__)), "ai_core")
 )
 
-from website import db
+from website.db_extension import db
 
 def create_app():
     app = Flask(__name__)
@@ -20,13 +20,13 @@ def create_app():
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
-    from . import models
+    from website import models
 
-    from routes.dashboard import dashboard_bp
-    from routes.chat import chat_bp
-    from routes.documents import documents_bp
-    from routes.predict import predict_bp
-    from routes.entities import entities_bp
+    from .dashboard import dashboard_bp
+    from .chat import chat_bp
+    from .documents import documents_bp
+    from .predict import predict_bp
+    from .entities import entities_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(chat_bp)
