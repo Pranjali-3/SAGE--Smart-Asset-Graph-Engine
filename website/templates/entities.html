@@ -1,19 +1,29 @@
 {% extends 'base.html' %}
 {% block body %}
-<h1>Explore Entities</h1>
+<div cass="page-container">
+    <div class="card">
+        <h1>Explore Entities</h1>
+        <form method="GET" class="predict-form">
+            <input type="text" name="name" value="{{ query }}" placeholder="Entity name">
+        </form>
 
-<form method="GET">
-    <input type="text" name="name" value="{{ query }}" placeholder="Entity name (e.g. P-101)">
-    <button type="submit">Search</button>
-</form>
-
-{% if report %}
-    {% if report.success %}
-        <h3>{{ report.report.equipment }}</h3>
-        <p>Status: {{ report.report.status }}</p>
-        <p>Root causes: {{ report.report.root_causes }}</p>
-    {% else %}
-        <p>Error: {{ report.error }}</p>
-    {% endif %}
-{% endif %}
+        {% if report %}
+            <div class="predict-result">
+                <div class="result-row">
+                    <span class="result-label">Equipment</span>
+                    <span class="result-value">{{ report.report.equipment }}</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Status</span>
+                    <span class="result-value">{{ report.report.status }}</span>
+                </div>
+                <h3>Root Causes</h3>
+                <p>{{ report.report.root_causes }}</p>
+            </div>
+            {% else %}
+                <p class="error">Error: {{ report.error }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

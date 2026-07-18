@@ -1,20 +1,24 @@
 {% extends 'base.html' %}
 {% block body %}
-<h1>Documents</h1>
+<div class="page-container">
+    <div class="card">
+        <h1>Documents</h1>
 
-<form method="POST" action="{{ url_for('documents.upload_document') }}" enctype="multipart/form-data">
-    <input type="file" name="file">
-    <button type="submit">Upload</button>
-</form>
+        <form method="POST" action="{{ url_for('documents.upload_document') }}" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="file">
+            <button type="submit">Upload</button>
+        </form>
 
-<table>
-    <tr><th>Filename</th><th>Status</th><th>Uploaded</th></tr>
-    {% for doc in documents %}
-    <tr>
-        <td>{{ doc.filename }}</td>
-        <td>{{ doc.status }}</td>
-        <td>{{ doc.uploaded_at }}</td>
-    </tr>
-    {% endfor %}
-</table>
+        <table class="doc-table">
+            <tr><th>Filename</th><th>Status</th><th>Uploaded</th></tr>
+            {% for doc in documents %}
+            <tr>
+                <td>{{ doc.filename }}</td>
+                <td><span class="status-badge status-{{ doc.status }}">{{ doc.status }}</span></td>
+                <td>{{ doc.uploaded_at.strftime('%d %b %Y, %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% block body %}
-<h1>Dashboard</h1>
-<p>Documents: {{ stats.documents }}</p>
-<p>Messages: {{ stats.messages }}</p>
+<div class="page-container">
+    <div class="card">
+        <h1>Dashbord</h1>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number">{{ stats.documents }}</div>
+                <div class="stat-label">Documents</div>
+            </div>
+            <div class="'stat-box">
+                <div class="stat-number">{{ stats.messages }}</div>
+                <div class="stat-label">Messages</div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
