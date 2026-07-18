@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 # Import relationship extractor
 
-from relationship_extractor import (
+from .relationship_extractor import (
     Relationship,
     extract_relationships
 )

@@ -4,7 +4,7 @@ import pickle
 import logging
 import numpy as np
 
-from entity_extractor import extract_entities
+from .entity_extractor import extract_entities
 
 # ==========================================================
 # Logging Configuration

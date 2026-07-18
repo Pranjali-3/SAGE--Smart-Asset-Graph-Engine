@@ -2,7 +2,7 @@ import os
 import joblib
 import pandas as pd
 import logging
-from data_processor import NASAProcessor
+from .data_processor import NASAProcessor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

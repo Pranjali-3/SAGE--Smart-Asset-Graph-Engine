@@ -10,7 +10,7 @@ sys.path.insert(
 from website.db_extension import db
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='../templates')
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sage.db"
     app.config["SECRET_KEY"] = "dev"

@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional
 
-from entity_extractor import extract_entities
+from .entity_extractor import extract_entities
 
 # ==========================================================
 # Logging
