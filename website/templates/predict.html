@@ -3,20 +3,29 @@
 <div class="page-container">
     <div class="card">
         <h1>Predict</h1>
+
         <form method="POST" class="predict-form">
             <input type="number" name="engine_id" placeholder="Engine ID">
             <input type="number" name="cycle" placeholder="Cycle">
             <button type="submit">Predict</button>
         </form>
-        {% if result.success %}
-        <div class="result-row">
-            <span class="result-label">Status</span>
-            <span class="status-badge status-{{ result.prediction['Failure Status'] | lower }}">
-                {{ result.prediction["Failure Status"] }}
-            </span>
-        </div>
-        <h3>Top Reasons</h3>
-         <ul>
+
+        {% if result %}
+            {% if result.success %}
+            <div class="predict-result">
+                <div class="result-row">
+                    <span class="result-label">Remaining Useful Life</span>
+                    <span class="result-value">{{ result.prediction["Remaining Useful Life"] }}</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Status</span>
+                    <span class="status-badge status-{{ result.prediction["Failure Status"] | lower }}">
+                        {{ result.prediction["Failure Status"] }}
+                    </span>
+                </div>
+
+                <h3>Top Reasons</h3>
+                <ul>
                 {% for reason in result.top_reasons %}
                     <li>{{ reason.feature }} <small>({{ reason.importance }})</small></li>
                 {% endfor %}

@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 {% block body %}
-<div cass="page-container">
+<div class="page-container">
     <div class="card">
         <h1>Explore Entities</h1>
+
         <form method="GET" class="predict-form">
-            <input type="text" name="name" value="{{ query }}" placeholder="Entity name">
+            <input type="text" name="name" value="{{ query }}" placeholder="Entity name (e.g. P-101)">
+            <button type="submit">Search</button>
         </form>
 
         {% if report %}
+            {% if report.success %}
             <div class="predict-result">
                 <div class="result-row">
                     <span class="result-label">Equipment</span>
