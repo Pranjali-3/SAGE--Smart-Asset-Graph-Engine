@@ -1,7 +1,9 @@
 body, html {
     margin: 0;
-    font-family: sans-serif;
+    padding: 0;
     background-color: #F0EEE9;
+    font-family: "Poppins", sans-serif;
+    color: #2E2E2E;
 }
 
 .navbar {
@@ -12,13 +14,15 @@ body, html {
     background-color: #1F3A5F ;
     border-bottom: 1px solid #304F78;
 }
-.navbar-brand {
-    font-weight: 700;
-    font-size: 1.4rem;
-    color: #FFFFFF;
-    letter-spacing: 0.5px;
-}
+.navbar-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
 
+    color:white;
+    font-size:1.4rem;
+    font-weight:700;
+}
 .navbar-links {
     display: flex;
     gap: 28px;
@@ -41,4 +45,10 @@ body, html {
     color: #7CB7FF;
     border-bottom: 2px solid #7CB7FF;
     padding-bottom: 4px;
+}
+
+.navbar-brand img{
+    width:42px;
+    height:42px;
+    object-fit:contain;
 }

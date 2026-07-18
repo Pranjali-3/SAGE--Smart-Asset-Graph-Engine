@@ -4,11 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {% block head %}{% endblock %}
 </head>
 <body>
     <nav class="navbar">
-        <div class="navbar-brand">SAGE</div>
+        <div class="navbar-brand">
+            <img src="{{ url_for('static', filename='images/sage_logo.png') }}" alt="SAGE Logo">
+            <span>SAGE</span>
+        </div>
         <div class="navbar-links">
             <a href="{{ url_for('dashboard.dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard.dashboard' else '' }}">Dashboard</a>
             <a href="{{ url_for('chat.chat') }}" class="{{ 'active' if request.endpoint == 'chat.chat' else '' }}">Chat</a>
