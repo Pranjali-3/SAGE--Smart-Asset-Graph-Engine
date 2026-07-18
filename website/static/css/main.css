@@ -3,3 +3,42 @@ body, html {
     font-family: sans-serif;
     background-color: #F0EEE9;
 }
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: auto;
+    background-color: #1F3A5F ;
+    border-bottom: 1px solid #304F78;
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #FFFFFF;
+    letter-spacing: 0.5px;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 28px;
+}
+
+.navbar-links a {
+    text-decoration: none;
+    color: #E8EEF7;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.navbar-links a:hover {
+    color: #7CB7FF;
+    transform: translateY(-2px);
+}
+
+.navbar-links a.active {
+    color: #7CB7FF;
+    border-bottom: 2px solid #7CB7FF;
+    padding-bottom: 4px;
+}
