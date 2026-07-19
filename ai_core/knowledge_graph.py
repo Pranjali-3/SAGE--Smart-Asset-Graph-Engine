@@ -48,7 +48,8 @@ class KnowledgeGraph:
 
         logger.info("Initializing Knowledge Graph...")
 
-        self.graph = nx.DiGraph()
+        self.entity_graph = nx.DiGraph()
+        self.prediction_graph = nx.DiGraph()
 
         logger.info("Knowledge Graph initialized.")
         # ============================================================
@@ -66,9 +67,9 @@ class KnowledgeGraph:
         if not entity:
             return
 
-        if not self.graph.has_node(entity):
+        if not self.entity_graph.has_node(entity):
 
-            self.graph.add_node(entity)
+            self.entity_graph.add_node(entity)
 
             logger.info(f"Added entity: {entity}")
 
@@ -86,7 +87,7 @@ class KnowledgeGraph:
         self.add_entity(relationship.subject)
         self.add_entity(relationship.object)
 
-        self.graph.add_edge(
+        self.entity_graph.add_edge(
 
             relationship.subject,
 
@@ -143,11 +144,11 @@ class KnowledgeGraph:
 
             f"Graph contains "
 
-            f"{self.graph.number_of_nodes()} nodes "
+            f"{self.entity_graph.number_of_nodes()} nodes "
 
             f"and "
 
-            f"{self.graph.number_of_edges()} edges."
+            f"{self.entity_graph.number_of_edges()} edges."
 
         )
         # ============================================================
@@ -158,7 +159,7 @@ class KnowledgeGraph:
         """
         Check whether an entity exists.
         """
-        return self.graph.has_node(entity)
+        return self.entity_graph.has_node(entity)
 
 
     def get_neighbors(self, entity: str):
@@ -170,8 +171,8 @@ class KnowledgeGraph:
 
         neighbors = set()
 
-        neighbors.update(self.graph.successors(entity))
-        neighbors.update(self.graph.predecessors(entity))
+        neighbors.update(self.entity_graph.successors(entity))
+        neighbors.update(self.entity_graph.predecessors(entity))
 
         return sorted(list(neighbors))
 
@@ -183,7 +184,7 @@ class KnowledgeGraph:
         if not self.entity_exists(entity):
             return []
 
-        return sorted(list(self.graph.successors(entity)))
+        return sorted(list(self.entity_graph.successors(entity)))
 
 
     def get_parents(self, entity: str):
@@ -193,7 +194,7 @@ class KnowledgeGraph:
         if not self.entity_exists(entity):
             return []
 
-        return sorted(list(self.graph.predecessors(entity)))
+        return sorted(list(self.entity_graph.predecessors(entity)))
         # ============================================================
     # RELATIONSHIP RETRIEVAL
     # ============================================================
@@ -208,7 +209,7 @@ class KnowledgeGraph:
 
         relationships = []
 
-        for _, target, data in self.graph.out_edges(entity, data=True):
+        for _, target, data in self.entity_graph.out_edges(entity, data=True):
 
             relationships.append({
 
@@ -237,7 +238,7 @@ class KnowledgeGraph:
 
         relationships = []
 
-        for source, _, data in self.graph.in_edges(entity, data=True):
+        for source, _, data in self.entity_graph.in_edges(entity, data=True):
 
             relationships.append({
 
@@ -261,11 +262,11 @@ class KnowledgeGraph:
     # ============================================================
 
     def node_count(self):
-        return self.graph.number_of_nodes()
+        return self.entity_graph.number_of_nodes()
 
 
     def edge_count(self):
-        return self.graph.number_of_edges()
+        return self.entity_graph.number_of_edges()
 
 
     def graph_statistics(self):
@@ -279,10 +280,10 @@ class KnowledgeGraph:
 
             "edges": self.edge_count(),
 
-            "density": nx.density(self.graph),
+            "density": nx.density(self.entity_graph),
 
             "connected_components": nx.number_weakly_connected_components(
-                self.graph
+                self.entity_graph
             )
 
         }
@@ -305,7 +306,7 @@ class KnowledgeGraph:
 
             return nx.shortest_path(
 
-                self.graph,
+                self.entity_graph,
 
                 source,
 
@@ -337,7 +338,7 @@ class KnowledgeGraph:
 
         for i in range(len(path) - 1):
 
-            edge = self.graph.get_edge_data(
+            edge = self.entity_graph.get_edge_data(
 
                 path[i],
 
@@ -374,9 +375,9 @@ class KnowledgeGraph:
 
         chain = []
 
-        for parent in self.graph.predecessors(equipment):
+        for parent in self.entity_graph.predecessors(equipment):
 
-            edge = self.graph.get_edge_data(
+            edge = self.entity_graph.get_edge_data(
 
                 parent,
 
@@ -446,7 +447,7 @@ class KnowledgeGraph:
 
             return None
 
-        for _, obj, data in self.graph.out_edges(
+        for _, obj, data in self.entity_graph.out_edges(
 
             equipment,
 
@@ -512,7 +513,7 @@ class KnowledgeGraph:
         Export graph to GraphML.
         """
 
-        nx.write_graphml(self.graph, filename)
+        nx.write_graphml(self.entity_graph, filename)
 
         logger.info(f"Graph exported to {filename}")
 
@@ -522,7 +523,7 @@ class KnowledgeGraph:
         Export graph for Gephi visualization.
         """
 
-        nx.write_gexf(self.graph, filename)
+        nx.write_gexf(self.entity_graph, filename)
 
         logger.info(f"Graph exported to {filename}")
 
@@ -533,7 +534,7 @@ class KnowledgeGraph:
 
     def import_graphml(self, filename):
 
-        self.graph = nx.read_graphml(filename)
+        self.entity_graph = nx.read_graphml(filename)
 
         logger.info("Graph imported.")
 
@@ -542,29 +543,35 @@ class KnowledgeGraph:
     # VISUALIZATION
     # ============================================================
 
-    def visualize(self):
+    def visualize(self, graph_type="entity"):
+
+        graph = (
+            self.entity_graph
+            if graph_type == "entity"
+            else self.prediction_graph
+        )
 
         plt.figure(figsize=(12,8))
 
         pos = nx.spring_layout(
-            self.graph,
+            graph,
             seed=42
         )
 
         nx.draw_networkx_nodes(
-            self.graph,
+            graph,
             pos,
             node_size=1800
         )
 
         nx.draw_networkx_labels(
-            self.graph,
+            graph,
             pos,
             font_size=8
         )
 
         nx.draw_networkx_edges(
-            self.graph,
+            graph,
             pos,
             arrows=True,
             arrowsize=20
@@ -574,13 +581,13 @@ class KnowledgeGraph:
 
             (u,v):d["relation"]
 
-            for u,v,d in self.graph.edges(data=True)
+            for u,v,d in graph.edges(data=True)
 
         }
 
         nx.draw_networkx_edge_labels(
 
-            self.graph,
+            graph,
 
             pos,
 
@@ -603,8 +610,10 @@ class KnowledgeGraph:
         """
         Build an explainable prediction graph.
         """
+        graph = self.prediction_graph
 
-        self.graph.clear()
+        graph.clear()
+
 
         status = prediction["Failure Status"]
         rul = prediction["Remaining Useful Life"]
@@ -613,7 +622,7 @@ class KnowledgeGraph:
         # Asset
         # ====================================================
 
-        self.graph.add_node(
+        graph.add_node(
             "Engine",
             type="Asset"
         )
@@ -624,12 +633,12 @@ class KnowledgeGraph:
 
         prediction_node = f"Failure={status}"
 
-        self.graph.add_node(
+        graph.add_node(
             prediction_node,
             type="Prediction"
         )
 
-        self.graph.add_edge(
+        graph.add_edge(
             "Engine",
             prediction_node,
             relation="Predicted As"
@@ -641,12 +650,12 @@ class KnowledgeGraph:
 
         rul_node = f"RUL={round(rul)} Cycles"
 
-        self.graph.add_node(
+        graph.add_node(
             rul_node,
             type="RUL"
         )
 
-        self.graph.add_edge(
+        graph.add_edge(
             "Engine",
             rul_node,
             relation="Estimated Remaining Life"
@@ -665,12 +674,12 @@ class KnowledgeGraph:
         else:
             risk = "Low Risk"
 
-        self.graph.add_node(
+        graph.add_node(
             risk,
             type="Risk"
         )
 
-        self.graph.add_edge(
+        graph.add_edge(
             prediction_node,
             risk,
             relation="Severity"
@@ -686,19 +695,19 @@ class KnowledgeGraph:
 
             importance = reason["importance"]
 
-            self.graph.add_node(
+            graph.add_node(
                 sensor,
                 type="Sensor",
                 importance=importance
             )
 
-            self.graph.add_edge(
+            graph.add_edge(
                 "Engine",
                 sensor,
                 relation="Monitored By"
             )
 
-            self.graph.add_edge(
+            graph.add_edge(
                 sensor,
                 prediction_node,
                 relation= "Contributes To",
@@ -711,12 +720,12 @@ class KnowledgeGraph:
 
         for action in recommendations["actions"]:
 
-            self.graph.add_node(
+            graph.add_node(
                 action,
                 type="Recommendation"
             )
 
-            self.graph.add_edge(
+            graph.add_edge(
                 prediction_node,
                 action,
                 relation="Recommended Action"
@@ -726,21 +735,18 @@ class KnowledgeGraph:
         # Maintenance Priority
         # ====================================================
 
-        priority = recommendations.get("priority", "Unknown") \
-            if isinstance(recommendations, dict) else None
+        priority = recommendations["priority"]
 
-        if priority:
+        graph.add_node(
+            priority,
+            type="Priority"
+        )
 
-            self.graph.add_node(
-                priority,
-                type="Priority"
-            )
-
-            self.graph.add_edge(
-                prediction_node,
-                priority,
-                relation="Maintenance Priority"
-            )
+        graph.add_edge(
+            prediction_node,
+            priority,
+            relation="Maintenance Priority"
+        )
 
         logger.info("Prediction Knowledge Graph built.")
 
@@ -815,11 +821,11 @@ if __name__ == "__main__":
     )
 
     print("\nNodes")
-    print(kg.graph.nodes(data=True))
+    print(kg.prediction_graph.nodes(data=True))
 
     print("\nEdges")
 
-    for edge in kg.graph.edges(data=True):
+    for edge in kg.prediction_graph.edges(data=True):
         print(edge)
 
-    kg.visualize()
+    kg.visualize("prediction")

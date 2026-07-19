@@ -1,4 +1,4 @@
-from ai_core.retriever import retrieve, get_context
+from ai_core.retriever import Retriever
 from ai_core.predict import Predictor
 from ai_core.explain_prediction import PredictionExplainer
 from ai_core.recommendation import RecommendationEngine
@@ -9,6 +9,7 @@ _predictor = None
 _explainer = None
 _recommender = None
 _kg = None
+_retriever = None
 
 
 def get_predictor():
@@ -32,6 +33,13 @@ def get_recommender():
     return _recommender
 
 
+def get_retriever():
+    global _retriever
+    if _retriever is None:
+        _retriever = Retriever()
+    return _retriever
+
+
 def get_kg():
     global _kg
     if _kg is None:
@@ -42,7 +50,7 @@ def get_kg():
 
 def search_knowledge(query: str, top_k=10):
     try:
-        results = retrieve(query, top_k=top_k)
+        results = get_retriever().retrieve(query, top_k=top_k)
         return {"success": True, "results": results}
     except Exception as e:
         return {"success": False, "error": str(e)}
