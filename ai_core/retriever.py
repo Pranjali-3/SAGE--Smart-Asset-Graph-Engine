@@ -210,6 +210,86 @@ class Retriever:
 
 
     # ==========================================================
+    # Keyword Overlap Score (Step 9)
+    # ==========================================================
+
+    def calculate_keyword_overlap(
+        self,
+        query,
+        chunk_text
+    ):
+        """
+        Calculate score based on keyword overlap between query and chunk.
+        """
+
+        query_words = set(query.lower().split())
+
+        chunk_words = set(chunk_text.lower().split())
+
+        # Remove common stop words
+        stop_words = {"the", "a", "an", "is", "are", "was", "were", "be",
+                      "been", "being", "have", "has", "had", "do", "does",
+                      "did", "will", "would", "could", "should", "may",
+                      "might", "can", "shall", "to", "of", "in", "for",
+                      "on", "with", "at", "by", "from", "as", "into",
+                      "through", "during", "before", "after", "above",
+                      "below", "between", "out", "off", "over", "under",
+                      "again", "further", "then", "once", "and", "but",
+                      "or", "nor", "not", "so", "very", "just", "than",
+                      "that", "this", "these", "those", "what", "which",
+                      "who", "whom", "when", "where", "why", "how"}
+
+        query_filtered = query_words - stop_words
+        chunk_filtered = chunk_words - stop_words
+
+        if not query_filtered:
+            return 0
+
+        overlap = len(query_filtered & chunk_filtered)
+
+        return overlap
+
+    # ==========================================================
+    # Metadata Match Score (Step 9)
+    # ==========================================================
+
+    def calculate_metadata_match(
+        self,
+        query_entities,
+        chunk
+    ):
+        """
+        Calculate score based on metadata matching (engine, status, dataset).
+        """
+
+        score = 0
+
+        if not isinstance(chunk, dict):
+            return 0
+
+        # Check engine match
+        for entity in query_entities:
+
+            entity_text = entity["text"].lower()
+
+            # Check engine ID
+            if chunk.get("engine"):
+                if entity_text == str(chunk["engine"]):
+                    score += 3
+
+            # Check dataset
+            if chunk.get("dataset"):
+                if entity_text in chunk["dataset"].lower():
+                    score += 2
+
+            # Check status
+            if chunk.get("status"):
+                if entity_text == chunk["status"]:
+                    score += 2
+
+        return score
+
+    # ==========================================================
     # Semantic Score
     # ==========================================================
 
@@ -226,24 +306,31 @@ class Retriever:
 
 
     # ==========================================================
-    # Combined Score
+    # Combined Score (Step 9)
     # ==========================================================
 
     def calculate_final_score(
         self,
         semantic_score,
-        entity_score
+        entity_score,
+        keyword_score,
+        metadata_score
     ):
         """
-        Combine semantic similarity
-        and entity matching score.
+        Combine semantic similarity, entity matching, keyword overlap,
+        and metadata matching scores.
         """
 
-        return semantic_score + entity_score
+        return (
+            semantic_score +
+            entity_score +
+            keyword_score * 0.5 +
+            metadata_score * 0.5
+        )
 
 
     # ==========================================================
-    # Entity-aware Re-ranking
+    # Entity-aware Re-ranking (Step 9 Enhanced)
     # ==========================================================
 
     def rerank_chunks(
@@ -252,9 +339,11 @@ class Retriever:
         retrieved_chunks
     ):
         """
-        Re-rank retrieved chunks
-        using semantic similarity
-        and entity overlap.
+        Re-rank retrieved chunks using:
+        - Semantic similarity
+        - Entity overlap
+        - Keyword overlap
+        - Metadata matching
         """
 
         query_entities = extract_entities(query)
@@ -286,11 +375,31 @@ class Retriever:
 
             )
 
+            keyword_score = self.calculate_keyword_overlap(
+
+                query,
+
+                chunk_text
+
+            )
+
+            metadata_score = self.calculate_metadata_match(
+
+                query_entities,
+
+                chunk
+
+            )
+
             final_score = self.calculate_final_score(
 
                 semantic_score,
 
-                entity_score
+                entity_score,
+
+                keyword_score,
+
+                metadata_score
 
             )
 
@@ -308,6 +417,10 @@ class Retriever:
                 ),
 
                 "entity_score": entity_score,
+
+                "keyword_score": keyword_score,
+
+                "metadata_score": metadata_score,
 
                 "final_score": round(
                     final_score,
@@ -489,6 +602,18 @@ class Retriever:
             print(
 
                 f"Entity Score     : {result['entity_score']}"
+
+            )
+
+            print(
+
+                f"Keyword Score    : {result['keyword_score']}"
+
+            )
+
+            print(
+
+                f"Metadata Score   : {result['metadata_score']}"
 
             )
 

@@ -1,0 +1,46 @@
+Industrial Predictive Maintenance Knowledge Base
+=================================================
+
+Health Status Definitions
+-------------------------
+
+Healthy: The engine is operating normally because remaining useful life is above 120 cycles. Continue routine monitoring and regular maintenance schedules.
+
+Warning: The engine is showing warning signs because remaining useful life is between 40 and 120 cycles. Close monitoring and scheduled maintenance should be considered to prevent unexpected failures.
+
+Critical: The engine is in critical condition because remaining useful life is below 40 cycles. Immediate maintenance is recommended to prevent failure and ensure safe operation.
+
+Operational Concepts
+---------------------
+
+Remaining Useful Life (RUL): The estimated number of operating cycles remaining before an engine requires maintenance or replacement. RUL is calculated based on historical degradation patterns and current sensor readings.
+
+Degradation Pattern: Engines typically show gradual performance decline before failure. Common degradation indicators include rising temperatures, increased vibration levels, declining efficiency, and reduced oil pressure.
+
+Sensor Monitoring: Industrial engines are monitored using multiple sensors measuring temperature, pressure, vibration, and efficiency. Changes in these parameters often precede mechanical failures.
+
+Maintenance Scheduling: Optimal maintenance timing balances operational costs with failure risk. Engines in warning status should be scheduled for inspection within the next 40-80 operating cycles.
+
+Failure Prevention: Early detection of degradation patterns allows for preventive maintenance, reducing downtime and preventing catastrophic failures that could cause safety hazards.
+
+Common Failure Modes
+---------------------
+
+Thermal Degradation: Rising core and engine temperatures indicate thermal stress. This may be caused by cooling system issues, lubrication problems, or excessive load conditions.
+
+Mechanical Wear: Increased vibration levels, particularly rotor vibration, suggest bearing wear, imbalance, or misalignment. These conditions progressively worsen if not addressed.
+
+Lubrication Issues: Declining oil temperature or pressure indicates lubrication system problems. Proper lubrication is critical for reducing friction and preventing component wear.
+
+Performance Decline: Reduced engine efficiency combined with increased fuel consumption indicates overall performance degradation. This may result from multiple factors including wear, deposits, or calibration drift.
+
+Data Interpretation
+--------------------
+
+Training Data: Contains complete engine run-to-failure cycles with known end-of-life points. Used to establish degradation patterns and train predictive models.
+
+Test Data: Contains partial engine cycles without failure labels. Used to evaluate prediction accuracy and model performance.
+
+Sensor Trends: Gradual increases in temperature and vibration combined with decreasing efficiency typically indicate normal aging. Sudden changes suggest acute problems requiring immediate attention.
+
+Window Analysis: Monitoring sensor behavior over time windows (10-50 cycles) helps identify degradation trends while filtering out normal operational variations.

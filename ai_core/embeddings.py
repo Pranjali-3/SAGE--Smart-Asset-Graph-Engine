@@ -82,16 +82,16 @@ def normalize_text(text):
 
 
 # ==========================================================
-# Chunk Builder with Overlap (Steps 2, 3)
+# Chunk Builder with Overlap (Step 7)
 # ==========================================================
 
 def build_chunks(
     text: str,
     max_chars: int = 700,
-    overlap_sentences: int = 2
+    overlap_chars: int = 100
 ):
     """
-    Combine sentences into chunks with overlap.
+    Combine sentences into chunks with character-based overlap.
     Overlap improves retrieval by maintaining context.
     """
 
@@ -122,9 +122,16 @@ def build_chunks(
 
                 chunks.append(" ".join(current_chunk))
 
-            overlap_start = max(0, len(current_chunk) - overlap_sentences)
+            # Character-based overlap
+            overlap_text = " ".join(current_chunk)
 
-            current_chunk = current_chunk[overlap_start:] + [sentence]
+            overlap_start = max(0, len(overlap_text) - overlap_chars)
+
+            overlap_chunk = overlap_text[overlap_start:]
+
+            current_chunk = [overlap_chunk] if overlap_chunk else []
+
+            current_chunk.append(sentence)
 
             current_length = sum(len(s) + 1 for s in current_chunk)
 
@@ -142,6 +149,7 @@ def build_chunks(
 def generate_embeddings(chunks):
     """
     Convert chunks into normalized embedding vectors.
+    Uses faiss.normalize_L2 for proper L2 normalization.
     """
 
     embeddings = embedding_model.encode(
@@ -150,13 +158,16 @@ def generate_embeddings(chunks):
 
         convert_to_numpy=True,
 
-        normalize_embeddings=True,
-
         show_progress_bar=True
 
     )
 
-    return embeddings.astype("float32")
+    embeddings = embeddings.astype("float32")
+
+    # Explicit L2 normalization using faiss
+    faiss.normalize_L2(embeddings)
+
+    return embeddings
 
 
 # ==========================================================
@@ -233,9 +244,9 @@ def save_metadata(
 
         "max_chars": 700,
 
-        "overlap_sentences": 2,
+        "overlap_chars": 100,
 
-        "normalize_embeddings": True,
+        "normalize_embeddings": "faiss.normalize_L2",
 
         "faiss_metric": "inner_product"
 
@@ -288,6 +299,7 @@ def process_dataset(folder_path):
     """
     Read every supported document from the dataset
     and convert it into chunks.
+    Also indexes knowledge base documents.
     """
 
     all_chunks = []
@@ -305,9 +317,46 @@ def process_dataset(folder_path):
 
     )
 
+    # First, process knowledge base documents
+    knowledge_file = r"data\knowledge.txt"
+
+    if os.path.exists(knowledge_file):
+        logging.info(f"Processing knowledge base: knowledge.txt")
+
+        try:
+            result = ingest_document(knowledge_file)
+
+            if result and isinstance(result, str):
+                text = normalize_text(result)
+
+                if len(text) > 0:
+                    document_chunks = build_chunks(text)
+
+                    for chunk in document_chunks:
+                        if len(chunk) < 80:
+                            continue
+
+                        all_chunks.append({
+                            "text": chunk,
+                            "source": "knowledge.txt",
+                            "chunk_id": len(all_chunks),
+                            "is_knowledge": True
+                        })
+
+                    logging.info(
+                        f"{len(document_chunks)} knowledge base chunks added."
+                    )
+
+        except Exception as e:
+            logging.warning(f"Error processing knowledge.txt: {e}")
+
+    # Process operational data
+    print("\nFiles found:")
+    print(os.listdir(folder_path))
     for file in sorted(os.listdir(folder_path)):
 
         path = os.path.join(folder_path, file)
+        print(f"\nProcessing: {file}")
 
         if not os.path.isfile(path):
 
@@ -403,10 +452,24 @@ if __name__ == "__main__":
     print("=" * 70)
 
     # ------------------------------------------------------
+    # Step 12: Delete old index files
+    # ------------------------------------------------------
+
+    old_files = ["data/faiss.index", "data/chunks.pkl", "data/metadata.json"]
+
+    for old_file in old_files:
+        if os.path.exists(old_file):
+            os.remove(old_file)
+            print(f"Deleted old file: {old_file}")
+
+    # ------------------------------------------------------
     # Dataset Folder (Step 1)
     # ------------------------------------------------------
 
-    dataset_folder = r"data\nasa\archive"
+    dataset_folder = r"data\nasa\archive\CMaps"
+    print(dataset_folder)
+    print(os.path.exists(dataset_folder))
+    print(os.listdir(dataset_folder))
 
     if not os.path.exists(dataset_folder):
 

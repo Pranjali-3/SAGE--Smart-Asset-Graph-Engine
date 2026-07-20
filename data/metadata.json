@@ -1,0 +1,7 @@
+{
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "max_chars": 700,
+  "overlap_chars": 100,
+  "normalize_embeddings": "faiss.normalize_L2",
+  "faiss_metric": "inner_product"
+}
