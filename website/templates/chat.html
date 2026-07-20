@@ -4,21 +4,27 @@
     <div class="card">
         <h1>Ask SAGE</h1>
 
-        <form method="POST">
+        <form method="POST" class="chat-form">
             <input type="text" name="query" placeholder="Ask a question...">
             <button type="submit">Send</button>
         </form>
 
         {% if answer %}
             {% if answer.success %}
-                {% for result in answer.results %}
-                    <div class="result-item">
-                        <p>{{ result.chunk }}</p>
-                        <small>Score: {{ result.final_score }}</small>
-                    </div>
-                {% endfor %}
+            <div class="answer-box">
+                <p class="answer-text">{{ answer.answer }}</p>
+
+                {% if answer.sources %}
+                <div class="sources">
+                    <strong>Sources:</strong>
+                    {% for source in answer.sources %}
+                        <span class="source-tag">{{ source }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
             {% else %}
-                <p>Error: {{ answer.error }}</p>
+                <p class="error">Error: {{ answer.error }}</p>
             {% endif %}
         {% endif %}
     </div>

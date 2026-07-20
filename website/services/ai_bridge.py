@@ -4,12 +4,14 @@ from ai_core.explain_prediction import PredictionExplainer
 from ai_core.recommendation import RecommendationEngine
 from ai_core.knowledge_graph import KnowledgeGraph
 from ai_core.data_processor import NASAProcessor
+from ai_core.copilot import Copilot
 
 _predictor = None
 _explainer = None
 _recommender = None
 _kg = None
 _retriever = None
+_copilot = None
 
 
 def get_predictor():
@@ -105,3 +107,16 @@ def graph_stats():
         return {"success": True, "stats": get_kg().graph_statistics()}
     except Exception as e:
         return {"success": False, "error": str(e)}
+    
+def get_copilot():
+    global _copilot
+    if _copilot is None:
+        _copilot = Copilot()
+    return _copilot
+
+def ask_copilot(question: str):
+    try:
+        result = get_copilot().ask(question)
+        return {"success": True, **result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}  

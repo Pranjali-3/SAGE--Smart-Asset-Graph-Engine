@@ -262,3 +262,28 @@ body, html {
     background-color: #f8d7da;
     color: #721c24;
 }
+
+.answer-box {
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+}
+
+.answer-text {
+    line-height: 1.6;
+    font-size: 1.05rem;
+}
+
+.sources {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.source-tag {
+    display: inline-block;
+    background-color: #F0EEE9;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-left: 6px;
+}
