@@ -28,12 +28,22 @@ embedding_model = SentenceTransformer(
 logging.info("Embedding model loaded.")
 
 # ==========================================================
-# Load FAISS Index
+# Retriever Class
 # ==========================================================
-class retrieve:
+
+class Retriever:
+
+    def __init__(self):
+        self.index = self.load_faiss_index()
+        self.chunks = self.load_chunks()
+
+    # ==========================================================
+    # Load FAISS Index
+    # ==========================================================
+
     def load_faiss_index(
-            self,
-            filename="data/faiss.index"
+        self,
+        filename="data/faiss.index"
     ):
         """
         Load the FAISS vector database.
@@ -51,8 +61,8 @@ class retrieve:
     # ==========================================================
 
     def load_chunks(
-            self,
-            filename="data/chunks.pkl"
+        self,
+        filename="data/chunks.pkl"
     ):
         """
         Load document chunks stored during
@@ -73,8 +83,8 @@ class retrieve:
     # ==========================================================
 
     def embed_query(
-            self,
-            query: str
+        self,
+        query: str
     ):
         """
         Convert the user's query
@@ -100,7 +110,7 @@ class retrieve:
         self,
         index,
         query_embedding,
-        top_k=10
+        top_k=20
     ):
         """
         Search the FAISS vector database
@@ -162,6 +172,7 @@ class retrieve:
             })
 
         return retrieved
+
     # ==========================================================
     # Entity Match Score
     # ==========================================================
@@ -261,13 +272,13 @@ class retrieve:
 
             chunk_entities = extract_entities(chunk_text)
 
-            semantic_score = calculate_semantic_score(
+            semantic_score = self.calculate_semantic_score(
 
                 item["distance"]
 
             )
 
-            entity_score = calculate_entity_score(
+            entity_score = self.calculate_entity_score(
 
                 query_entities,
 
@@ -275,7 +286,7 @@ class retrieve:
 
             )
 
-            final_score = calculate_final_score(
+            final_score = self.calculate_final_score(
 
                 semantic_score,
 
@@ -322,7 +333,7 @@ class retrieve:
     # Remove Duplicate Chunks
     # ==========================================================
 
-    def remove_duplicates(ranked_results):
+    def remove_duplicates(self, ranked_results):
         """
         Remove duplicate chunks while preserving ranking.
         """
@@ -353,7 +364,7 @@ class retrieve:
             unique_chunks.add(chunk_text)
 
             # ---------------------------
-            # Store x`eaned result
+            # Store cleaned result
             # ---------------------------
             filtered_results.append({
                 **result,
@@ -361,6 +372,7 @@ class retrieve:
             })
 
         return filtered_results
+
     # ==========================================================
     # Complete Retrieval Pipeline
     # ==========================================================
@@ -368,23 +380,21 @@ class retrieve:
     def retrieve(
         self,
         query: str,
-        top_k=10
+        top_k=20
     ):
         """
         Complete retrieval pipeline.
         """
 
-        # Load vector database
-        index = load_faiss_index()
-
-        # Load stored chunks
-        chunks = load_chunks()
+        # Use pre-loaded data
+        index = self.index
+        chunks = self.chunks
 
         # Convert query into embedding
-        query_embedding = embed_query(query)
+        query_embedding = self.embed_query(query)
 
         # Semantic search
-        distances, indices = search_index(
+        distances, indices = self.search_index(
 
             index,
 
@@ -395,7 +405,7 @@ class retrieve:
         )
 
         # Retrieve chunk text
-        retrieved_chunks = retrieve_chunks(
+        retrieved_chunks = self.retrieve_chunks(
 
             chunks,
 
@@ -406,7 +416,7 @@ class retrieve:
         )
 
         # Entity-aware ranking
-        ranked_results = rerank_chunks(
+        ranked_results = self.rerank_chunks(
 
             query,
 
@@ -415,7 +425,7 @@ class retrieve:
         )
 
         # Remove duplicates
-        ranked_results = remove_duplicates(
+        ranked_results = self.remove_duplicates(
 
             ranked_results
 
@@ -520,23 +530,16 @@ class retrieve:
     def get_context(
         self,
         ranked_results,
-        max_chunks=5
+        max_chunks=8
     ):
-        """
-        Return only chunk text.
-        Useful for relationship extraction
-        and LLM generation.
-        """
 
-        context = []
+        context = "\n\n".join(
 
-        for result in ranked_results[:max_chunks]:
+            result["chunk"]
 
-            context.append(
+            for result in ranked_results[:max_chunks]
 
-                result["chunk"]
-
-            )
+        )
 
         return context
 
@@ -548,6 +551,8 @@ if __name__ == "__main__":
 
     print("\nIndustrial Knowledge Retriever")
     print("=" * 70)
+
+    retriever = Retriever()
 
     while True:
 
@@ -565,11 +570,11 @@ if __name__ == "__main__":
         # Retrieve Results
         # --------------------------------------------------
 
-        ranked_results = retrieve(
+        ranked_results = retriever.retrieve(
 
             query,
 
-            top_k=10
+            top_k=20
 
         )
 
@@ -577,7 +582,7 @@ if __name__ == "__main__":
         # Display Results
         # --------------------------------------------------
 
-        display_results(
+        retriever.display_results(
 
             ranked_results
 
@@ -587,11 +592,11 @@ if __name__ == "__main__":
         # Context for Downstream Modules
         # --------------------------------------------------
 
-        context = get_context(
+        context = retriever.get_context(
 
             ranked_results,
 
-            max_chunks=5
+            max_chunks=8
 
         )
 
@@ -612,3 +617,10 @@ if __name__ == "__main__":
 
         print("\nRetriever Finished.")
         print("=" * 70)
+
+    retriever = Retriever()
+
+    for i in range(10):
+            print("=" * 80)
+            print("Chunk", i)
+            print(retriever.chunks[i])

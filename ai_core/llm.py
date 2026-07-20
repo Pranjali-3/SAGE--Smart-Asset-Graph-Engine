@@ -94,9 +94,9 @@ class LLMEngine:
 
 if __name__ == "__main__":
 
-    from .retriever import retrieve
+    from .retriever import Retriever
 
-    retriever = retrieve()
+    retriever = Retriever()
     llm = LLMEngine()
 
     while True:
@@ -107,6 +107,14 @@ if __name__ == "__main__":
             break
 
         context = retriever.retrieve(question)
+
+        print("=" * 80)
+        print("Retrieved Context")
+        print("=" * 80)
+
+        print(context)
+
+        print("=" * 80)
 
         answer = llm.ask(
             question,
