@@ -106,31 +106,59 @@ REGEX_PATTERNS = {
 
     "DOCUMENT": r"\bDOC-\d+(?:-\d+)?\b",
 
-
-    # Industrial Documents
-
-    "DOCUMENT": r"\bDOC-\d+(?:-\d+)?\b",
-
-    "SOP": r"\bSOP-\d+\b",
-
     "MANUAL": r"\bMAN-\d+\b",
-
-    # NASA Files
-
-    "NASA_DATASET": r"\bFD00[1-4]\b",
 
     # Failure Codes
 
     "FAULT_CODE": r"\bFC-\d+\b",
 
-    # NASA C-MAPSS
-    "ENGINE": r"\bEngine\s*\d+\b",
+    # NASA Files
 
-    "CYCLE": r"\bcycle\s*\d+\b",
+    "NASA_DATASET": r"\bFD00[1-4]\b",
 
-    "SENSOR": r"\bS\d{1,2}\b",
-    
-    "SETTING": r"\bsetting\s*\d+\b"
+    # NASA C-MAPSS entities
+
+    "ENGINE": r"\b[Ee]ngine\s*\d+\b",
+
+    "CYCLE": r"\b[Cc]ycle\s*\d+\b",
+
+    "SENSOR": r"\b(?:[Ss]ensor\s*)?[Ss]?\d{1,2}\b",
+
+    "SETTING": r"(?i)\b[Ss]etting\s*\d+\b",
+
+    # Technical terms
+
+    "NASA": r"\bNASA\b",
+
+    "CMAPSS": r"\bC[-_\s]?MAPSS\b",
+
+    "RUL": r"\bRUL\b|\bRemaining Useful Life\b",
+
+    "HPC": r"\bHPC\b",
+
+    "HPT": r"\bHPT\b",
+
+    "LPT": r"\bLPT\b",
+
+    "FAN": r"\b[Ff]an\b",
+
+    "TURBOFAN": r"\bturbofan(?:\s+engine)?\b",
+
+    # Failure modes
+
+    "DEGRADATION": r"\b[Dd]egradation\b",
+
+    "FAULT": r"\bfault(?:s)?\b",
+
+    "FAILURE": r"\bfail(?:ure|ed|ing|s)?\b",
+
+    # Sensor readings
+
+    "VIBRATION": r"\b[Vv]ibration\b",
+
+    "TEMPERATURE": r"\b[Tt]emperature\b",
+
+    "PRESSURE": r"\b[Pp]ressure\b",
 }
 
 
@@ -224,8 +252,37 @@ LABEL_MAPPING = {
 
     "FAULT_CODE": "FAULT_CODE",
 
-    "NASA_DATASET": "NASA_DATASET"
+    "NASA_DATASET": "NASA_DATASET",
 
+    # Technical terms
+
+    "NASA": "NASA",
+
+    "CMAPSS": "CMAPSS",
+
+    "RUL": "RUL",
+
+    "HPC": "HPC",
+
+    "HPT": "HPT",
+
+    "LPT": "LPT",
+
+    "FAN": "FAN",
+
+    "TURBOFAN": "TURBOFAN",
+
+    "DEGRADATION": "DEGRADATION",
+
+    "FAULT": "FAULT",
+
+    "FAILURE": "FAILURE",
+
+    "VIBRATION": "VIBRATION",
+
+    "TEMPERATURE": "TEMPERATURE",
+
+    "PRESSURE": "PRESSURE",
 }
 
 
@@ -234,6 +291,30 @@ LABEL_MAPPING = {
 # ==========================================================
 
 LABEL_PRIORITY = {
+
+    # Technical terms (highest)
+
+    "NASA": 100,
+
+    "CMAPSS": 100,
+
+    "RUL": 100,
+
+    "HPC": 100,
+
+    "HPT": 100,
+
+    "LPT": 100,
+
+    "TURBOFAN": 100,
+
+    "FAULT": 100,
+
+    "FAILURE": 100,
+
+    "DEGRADATION": 100,
+
+    # Equipment
 
     "PUMP": 100,
 
@@ -272,6 +353,14 @@ LABEL_PRIORITY = {
     "SENSOR": 100,
     
     "SETTING": 100,
+
+    "FAN": 100,
+
+    "VIBRATION": 100,
+
+    "TEMPERATURE": 100,
+
+    "PRESSURE": 100,
 
     "PERSON": 90,
 
@@ -434,24 +523,6 @@ BLACKLIST = {
     "figure",
 
     "fig",
-
-    "sensor",
-
-    "pump",
-
-    "motor",
-
-    "valve",
-
-    "engine",
-
-    "compressor",
-
-    "system",
-
-    "unit",
-
-    "equipment"
 
 }
 

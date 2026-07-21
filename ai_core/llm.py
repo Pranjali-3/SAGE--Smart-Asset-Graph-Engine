@@ -94,9 +94,11 @@ Answer:"""
             top_k=5
         )
 
-        # Deduplicate chunks
+        # ==========================
+        # Remove duplicate chunks
+        # ==========================
         unique = []
-        seen = set()
+        seen_chunks = set()
 
         for result in ranked_results:
 
@@ -107,29 +109,47 @@ Answer:"""
             else:
                 text = str(chunk)
 
-            if text not in seen:
-                seen.add(text)
+            if text not in seen_chunks:
+                seen_chunks.add(text)
                 unique.append(text)
 
         context = "\n\n".join(unique)
 
+        # ==========================
+        # Generate answer
+        # ==========================
         answer = self.generate(
             question,
             context
         )
 
+        # ==========================
+        # Remove duplicate sources
+        # ==========================
+        sources = []
+        seen_sources = set()
+
+        for result in ranked_results:
+
+            chunk = result["chunk"]
+
+            if isinstance(chunk, dict):
+
+                source = chunk.get("source")
+
+                if source and source not in seen_sources:
+                    seen_sources.add(source)
+                    sources.append(source)
+
+        # ==========================
+        # Return response
+        # ==========================
         return {
             "question": question,
             "answer": answer,
             "context": context,
-            "sources": [
-                chunk["chunk"]["source"]
-                for chunk in ranked_results
-                if isinstance(chunk["chunk"], dict)
-            ]
+            "sources": sources
         }
-
-
 # ==========================================================
 # Main
 # ==========================================================
