@@ -458,6 +458,39 @@ def extract_nasa_txt(path):
 
     return text_blocks
 
+def extract_rul_txt(path):
+    """
+    Read NASA Remaining Useful Life file.
+
+    Each line corresponds to one engine in the
+    test dataset.
+    """
+
+    filename = os.path.basename(path)
+
+    logging.info(f"Reading NASA RUL file: {filename}")
+
+    dataframe = pd.read_csv(
+        path,
+        header=None,
+        names=["RUL"]
+    )
+
+    text_blocks = []
+
+    for engine_id, row in enumerate(dataframe.itertuples(), start=1):
+
+        text_blocks.append(
+            f"Engine {engine_id} has Remaining Useful Life of "
+            f"{int(row.RUL)} cycles."
+        )
+
+    logging.info(
+        f"Created {len(text_blocks)} RUL records."
+    )
+
+    return "\n".join(text_blocks)
+
 
 # ==========================================================
 # Generic TXT Extraction
@@ -465,13 +498,24 @@ def extract_nasa_txt(path):
 
 def extract_txt(path):
 
-    # NASA dataset - returns list of dicts
-    if "FD00" in os.path.basename(path):
+    filename = os.path.basename(path).lower()
+
+    # NASA train datasets
+    if filename.startswith("train_fd"):
         return extract_nasa_txt(path)
 
-    with open(path, "r", encoding="latin-1") as file:
-        return file.read()
+    # NASA test datasets
+    elif filename.startswith("test_fd"):
+        return extract_nasa_txt(path)
 
+    # NASA RUL datasets
+    elif filename.startswith("rul_fd"):
+        return extract_rul_txt(path)
+
+    # Any other txt
+    else:
+        with open(path, "r", encoding="latin-1") as file:
+            return file.read()
 
 # ==========================================================
 # Universal Document Loader

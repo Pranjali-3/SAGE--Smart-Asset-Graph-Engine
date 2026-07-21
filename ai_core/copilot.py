@@ -1,27 +1,27 @@
-from .retriever import Retriever
+import logging
+
 from .llm import LLMEngine
+from .retriever import Retriever
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Copilot:
 
     def __init__(self):
+
+        logger.info("Initializing Copilot...")
+
         self.retriever = Retriever()
+
         self.llm = LLMEngine()
 
-    def ask(self, question: str, top_k: int = 20, max_chunks: int = 8):
-        ranked_results = self.retriever.retrieve(question, top_k=top_k)
+        logger.info("Copilot Ready.")
 
-        context = self.retriever.get_context(ranked_results, max_chunks=max_chunks)
+    def ask(self, question):
 
-        answer = self.llm.ask(question, context)
-
-        sources = list({
-            result["chunk"]["source"] if isinstance(result["chunk"], dict) else None
-            for result in ranked_results[:max_chunks]
-        } - {None})
-
-        return {
-            "answer": answer,
-            "sources": sources,
-            "chunks_used": ranked_results[:max_chunks]
-        }
+        return self.llm.ask(
+            question,
+            self.retriever
+        )

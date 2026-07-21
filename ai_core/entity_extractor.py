@@ -1,9 +1,9 @@
-import spacy
 import logging
 import re
 
 from typing import List, Dict
-from transformers import pipeline
+
+from .model_manager import models
 
 # ==========================================================
 # Logging Configuration
@@ -15,24 +15,12 @@ logging.basicConfig(
 )
 
 # ==========================================================
-# Load Models
+# Load Models from ModelManager
 # ==========================================================
 
-logging.info("Loading spaCy model...")
+nlp = models.spacy
 
-nlp = spacy.load("en_core_web_sm")
-
-logging.info("spaCy model loaded.")
-
-logging.info("Loading BERT NER model...")
-
-bert_ner = pipeline(
-    "ner",
-    model="dslim/bert-base-NER",
-    aggregation_strategy="simple"
-)
-
-logging.info("BERT model loaded.")
+bert_ner = models.bert_pipeline
 
 # ==========================================================
 # spaCy Entity Extraction

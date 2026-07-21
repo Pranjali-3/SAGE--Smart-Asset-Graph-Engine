@@ -1,12 +1,12 @@
-from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import pickle
 import json
 import logging
-import spacy
 import os
+import re
 
+from .model_manager import models
 from .ingestion import ingest_document
 
 # ==========================================================
@@ -17,28 +17,15 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s: %(message)s"
 )
-
-# ==========================================================
-# Load spaCy Model
-# ==========================================================
-
-logging.info("Loading spaCy model...")
-
-nlp = spacy.load("en_core_web_sm")
-
-logging.info("spaCy model loaded.")
-
-# ==========================================================
-# Load Embedding Model
-# ==========================================================
-
-logging.info("Loading embedding model...")
-
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
-embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+# ==========================================================
+# Load Models from ModelManager
+# ==========================================================
 
-logging.info("Embedding model loaded.")
+nlp = models.spacy
+
+embedding_model = models.embedding_model
 
 # ==========================================================
 # Sentence Splitter
@@ -63,16 +50,56 @@ def split_into_sentences(text: str):
 
 
 # ==========================================================
+# Garbage Section Remover (Step 3)
+# ==========================================================
+
+GARBAGE_SECTIONS = [
+    "REFERENCES",
+    "ACKNOWLEDGEMENTS",
+    "ACKNOWLEDGMENTS",
+    "AUTHOR INFORMATION",
+    "COPYRIGHT",
+    "CONFLICT OF INTEREST",
+    "FUNDING",
+    "SUPPORTING INFORMATION",
+    "APPENDIX",
+    "ABOUT THE AUTHORS",
+    "BIOGRAPHY",
+    "TABLE OF CONTENTS",
+    "LIST OF TABLES",
+    "LIST OF FIGURES",
+    "ABBREVIATIONS",
+    "GLOSSARY",
+]
+
+
+def remove_garbage_sections(text):
+    """
+    Remove sections that add no value for RAG.
+    """
+
+    for section in GARBAGE_SECTIONS:
+
+        pattern = r"(?i)\b" + re.escape(section) + r"\b.*"
+
+        text = re.sub(pattern, "", text, flags=re.DOTALL)
+
+    return text
+
+
+# ==========================================================
 # Text Normalizer (Step 5)
 # ==========================================================
 
 def normalize_text(text):
     """
     Normalize text before chunking.
-    Removes OCR artifacts and extra whitespace.
+    Removes OCR artifacts, extra whitespace, and garbage sections.
     """
 
     text = str(text)
+
+    text = remove_garbage_sections(text)
 
     text = text.replace("\n", " ")
 
@@ -240,7 +267,7 @@ def save_metadata(
 
     metadata = {
 
-        "embedding_model": EMBEDDING_MODEL_NAME,
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
 
         "max_chars": 700,
 

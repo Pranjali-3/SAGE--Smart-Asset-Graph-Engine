@@ -1,8 +1,5 @@
 import logging
-from .entity_extractor import extract_entities
-
-from transformers import AutoTokenizer
-from transformers import AutoModelForSeq2SeqLM
+from .model_manager import models
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,45 +9,38 @@ class LLMEngine:
 
     def __init__(self):
 
-        logger.info("Loading LLM...")
+        logger.info("Loading FLAN-T5 from ModelManager...")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            "google/flan-t5-base"
-        )
+        self.tokenizer = models.llm_tokenizer
 
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            "google/flan-t5-base"
-        )
+        self.model = models.llm_model
 
-        logger.info("LLM Loaded.")
+        logger.info("LLM Ready.")
+
+    # ==========================================================
+    # Prompt Builder (Short for FLAN)
+    # ==========================================================
 
     def build_prompt(self, question, context):
 
-        prompt = f"""
-    You are an Industrial AI assistant.
+        return f"""Context:
 
-    Use ONLY the information provided in the context.
+{context}
 
-    If the context does not contain the answer,
-    reply:
-    "I don't know based on the available information."
+Question:
+{question}
 
-    Context:
-    {context}
+Answer ONLY using the context.
+If the answer is missing, say:
+I don't know based on the available documents.
 
-    Question:
-    {question}
+Answer:"""
 
-    Answer:
-    """
+    # ==========================================================
+    # Generate Answer
+    # ==========================================================
 
-        return prompt
-
-    def generate(
-        self,
-        question,
-        context
-    ):
+    def generate(self, question, context):
 
         prompt = self.build_prompt(
             question,
@@ -58,68 +48,121 @@ class LLMEngine:
         )
 
         inputs = self.tokenizer(
+
             prompt,
+
             return_tensors="pt",
+
             truncation=True,
+
             max_length=512
+
         )
 
         outputs = self.model.generate(
-    **inputs,
-    max_new_tokens=150,
-    num_beams=5,
-    repetition_penalty=1.2,
-    length_penalty=1.0,
-    early_stopping=True
-)
+
+            **inputs,
+
+            max_new_tokens=120,
+
+            do_sample=True,
+
+            temperature=0.3,
+
+            top_p=0.9
+
+        )
 
         answer = self.tokenizer.decode(
+
             outputs[0],
+
             skip_special_tokens=True
+
         )
 
         return answer
 
-    def ask(
-        self,
-        question,
-        context
-    ):
+    # ==========================================================
+    # Chat Interface (top_k=5, max_chunks=3)
+    # ==========================================================
 
-        return self.generate(
+    def ask(self, question, retriever):
+
+        ranked_results = retriever.retrieve(
+            question,
+            top_k=5
+        )
+
+        # Deduplicate chunks
+        unique = []
+        seen = set()
+
+        for result in ranked_results:
+
+            chunk = result["chunk"]
+
+            if isinstance(chunk, dict):
+                text = chunk.get("text", "")
+            else:
+                text = str(chunk)
+
+            if text not in seen:
+                seen.add(text)
+                unique.append(text)
+
+        context = "\n\n".join(unique)
+
+        answer = self.generate(
             question,
             context
         )
 
+        return {
+            "question": question,
+            "answer": answer,
+            "context": context,
+            "sources": [
+                chunk["chunk"]["source"]
+                for chunk in ranked_results
+                if isinstance(chunk["chunk"], dict)
+            ]
+        }
+
+
+# ==========================================================
+# Main
+# ==========================================================
 
 if __name__ == "__main__":
 
     from .retriever import Retriever
 
     retriever = Retriever()
+
     llm = LLMEngine()
+
+    print("\nIndustrial AI Assistant")
+    print("=" * 70)
 
     while True:
 
-        question = input("\nAsk: ")
+        question = input("\nAsk : ")
 
         if question.lower() == "exit":
             break
 
-        context = retriever.retrieve(question)
-
-        print("=" * 80)
-        print("Retrieved Context")
-        print("=" * 80)
-
-        print(context)
-
-        print("=" * 80)
-
-        answer = llm.ask(
+        response = llm.ask(
             question,
-            context
+            retriever
         )
 
-        print("\nAnswer:")
-        print(answer)
+        print("\nAnswer")
+        print("=" * 70)
+        print(response["answer"])
+
+        print("\nSources")
+        print("=" * 70)
+
+        for source in sorted(set(response["sources"])):
+            print("-", source)

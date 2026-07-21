@@ -1,9 +1,9 @@
-from sentence_transformers import SentenceTransformer
 import faiss
 import pickle
 import logging
 import numpy as np
-
+import re
+from .model_manager import models
 from .entity_extractor import extract_entities
 
 # ==========================================================
@@ -16,16 +16,10 @@ logging.basicConfig(
 )
 
 # ==========================================================
-# Load Embedding Model
+# Load Embedding Model from ModelManager
 # ==========================================================
 
-logging.info("Loading embedding model...")
-
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
-
-logging.info("Embedding model loaded.")
+embedding_model = models.embedding_model
 
 # ==========================================================
 # Retriever Class
@@ -214,52 +208,44 @@ class Retriever:
     # ==========================================================
 
     def calculate_keyword_overlap(
-        self,
-        query,
-        chunk_text
-    ):
-        """
-        Calculate score based on keyword overlap between query and chunk.
-        """
+    self,
+    query,
+    chunk_text
+):
 
-        query_words = set(query.lower().split())
+        query_words = set(
+            re.findall(r"\w+", query.lower())
+        )
 
-        chunk_words = set(chunk_text.lower().split())
+        chunk_words = set(
+            re.findall(r"\w+", chunk_text.lower())
+        )
 
-        # Remove common stop words
-        stop_words = {"the", "a", "an", "is", "are", "was", "were", "be",
-                      "been", "being", "have", "has", "had", "do", "does",
-                      "did", "will", "would", "could", "should", "may",
-                      "might", "can", "shall", "to", "of", "in", "for",
-                      "on", "with", "at", "by", "from", "as", "into",
-                      "through", "during", "before", "after", "above",
-                      "below", "between", "out", "off", "over", "under",
-                      "again", "further", "then", "once", "and", "but",
-                      "or", "nor", "not", "so", "very", "just", "than",
-                      "that", "this", "these", "those", "what", "which",
-                      "who", "whom", "when", "where", "why", "how"}
+        stop_words = {
+            "the","a","an","is","are","was","were",
+            "of","to","in","on","for","with","by",
+            "what","which","who","when","where",
+            "how","does","do","did"
+        }
 
-        query_filtered = query_words - stop_words
-        chunk_filtered = chunk_words - stop_words
+        query_words -= stop_words
+        chunk_words -= stop_words
 
-        if not query_filtered:
-            return 0
-
-        overlap = len(query_filtered & chunk_filtered)
-
-        return overlap
+        return len(query_words & chunk_words)
 
     # ==========================================================
-    # Metadata Match Score (Step 9)
+    # Metadata Match Score (Step 9 - Improved)
     # ==========================================================
 
     def calculate_metadata_match(
         self,
+        query,
         query_entities,
         chunk
     ):
         """
         Calculate score based on metadata matching (engine, status, dataset).
+        Uses substring matching and also searches raw query text.
         """
 
         score = 0
@@ -267,25 +253,37 @@ class Retriever:
         if not isinstance(chunk, dict):
             return 0
 
-        # Check engine match
-        for entity in query_entities:
+        query_lower = query.lower()
 
-            entity_text = entity["text"].lower()
-
-            # Check engine ID
-            if chunk.get("engine"):
-                if entity_text == str(chunk["engine"]):
+        # Check engine match - substring matching
+        engine = str(chunk.get("engine", ""))
+        if engine:
+            # Direct engine number match in query
+            if engine in query_lower:
+                score += 3
+            # Entity-based match
+            for entity in query_entities:
+                entity_text = entity["text"].lower()
+                if engine in entity_text or entity_text in engine:
                     score += 3
+                    break
 
-            # Check dataset
-            if chunk.get("dataset"):
-                if entity_text in chunk["dataset"].lower():
+        # Check dataset match
+        if chunk.get("dataset"):
+            dataset = chunk["dataset"].lower()
+            if dataset in query_lower:
+                score += 2
+            for entity in query_entities:
+                entity_text = entity["text"].lower()
+                if dataset in entity_text:
                     score += 2
+                    break
 
-            # Check status
-            if chunk.get("status"):
-                if entity_text == chunk["status"]:
-                    score += 2
+        # Check status match - raw query text
+        if chunk.get("status"):
+            status = chunk["status"].lower()
+            if status in query_lower:
+                score += 2
 
         return score
 
@@ -302,7 +300,7 @@ class Retriever:
         a similarity score.
         """
 
-        return 1 / (1 + distance)
+        return float(distance)
 
 
     # ==========================================================
@@ -322,10 +320,13 @@ class Retriever:
         """
 
         return (
-            semantic_score +
-            entity_score +
-            keyword_score * 0.5 +
-            metadata_score * 0.5
+            0.45*semantic_score +
+
+            0.25*keyword_score +
+
+            0.20*metadata_score +
+
+            0.10*entity_score
         )
 
 
@@ -342,7 +343,7 @@ class Retriever:
         Re-rank retrieved chunks using:
         - Semantic similarity
         - Entity overlap
-        - Keyword overlap
+        - Keyword overlap (normalized)
         - Metadata matching
         """
 
@@ -383,7 +384,12 @@ class Retriever:
 
             )
 
+            # Normalize keyword score (max 5)
+            keyword_score = min(keyword_score, 5) / 5
+
             metadata_score = self.calculate_metadata_match(
+
+                query,
 
                 query_entities,
 
@@ -418,7 +424,7 @@ class Retriever:
 
                 "entity_score": entity_score,
 
-                "keyword_score": keyword_score,
+                "keyword_score": round(keyword_score, 4),
 
                 "metadata_score": metadata_score,
 
@@ -481,22 +487,24 @@ class Retriever:
             # ---------------------------
             filtered_results.append({
                 **result,
-                "chunk": chunk_text
+                "chunk": chunk
             })
 
         return filtered_results
 
     # ==========================================================
-    # Complete Retrieval Pipeline
+    # Complete Retrieval Pipeline (Improved: FAISS 50 -> Rerank -> 8)
     # ==========================================================
 
     def retrieve(
         self,
         query: str,
-        top_k=20
+        top_k=8,
+        faiss_candidates=50
     ):
         """
         Complete retrieval pipeline.
+        Retrieves 50 candidates from FAISS, reranks, returns best 8.
         """
 
         # Use pre-loaded data
@@ -506,14 +514,14 @@ class Retriever:
         # Convert query into embedding
         query_embedding = self.embed_query(query)
 
-        # Semantic search
+        # Semantic search - get more candidates for reranking
         distances, indices = self.search_index(
 
             index,
 
             query_embedding,
 
-            top_k
+            faiss_candidates
 
         )
 
@@ -544,7 +552,8 @@ class Retriever:
 
         )
 
-        return ranked_results
+        # Return only top_k results
+        return ranked_results[:top_k]
 
 
     # ==========================================================
@@ -589,25 +598,13 @@ class Retriever:
 
             print(
 
-                f"Semantic Distance: {result['distance']:.4f}"
-
-            )
-
-            print(
-
                 f"Semantic Score   : {result['semantic_score']:.4f}"
 
             )
 
             print(
 
-                f"Entity Score     : {result['entity_score']}"
-
-            )
-
-            print(
-
-                f"Keyword Score    : {result['keyword_score']}"
+                f"Keyword Score    : {result['keyword_score']:.4f}"
 
             )
 
@@ -619,13 +616,34 @@ class Retriever:
 
             print(
 
+                f"Entity Score     : {result['entity_score']}"
+
+            )
+
+            print(
+
                 f"Final Score      : {result['final_score']:.4f}"
 
             )
 
-            print("\nChunk")
+            print()
 
-            print(result["chunk"])
+            chunk = result["chunk"]
+
+            if isinstance(chunk, dict):
+
+                print(f"Source          : {chunk.get('source')}")
+                print(f"Dataset         : {chunk.get('dataset')}")
+                print(f"Engine          : {chunk.get('engine')}")
+                print(f"Status          : {chunk.get('status')}")
+                print(f"RUL             : {chunk.get('rul')}")
+
+                print("\nChunk")
+                print(chunk.get("text"))
+
+            else:
+
+                print(chunk)
 
             print("\nEntities")
 
@@ -658,15 +676,21 @@ class Retriever:
         max_chunks=8
     ):
 
-        context = "\n\n".join(
+        context = []
 
-            result["chunk"]
+        for result in ranked_results[:max_chunks]:
 
-            for result in ranked_results[:max_chunks]
+            chunk = result["chunk"]
 
-        )
+            if isinstance(chunk, dict):
 
-        return context
+                context.append(chunk["text"])
+
+            else:
+
+                context.append(str(chunk))
+
+        return "\n\n".join(context)
 
 # ==========================================================
 # Main
@@ -692,14 +716,16 @@ if __name__ == "__main__":
             break
 
         # --------------------------------------------------
-        # Retrieve Results
+        # Retrieve Results (FAISS 50 -> Rerank -> 8)
         # --------------------------------------------------
 
         ranked_results = retriever.retrieve(
 
             query,
 
-            top_k=20
+            top_k=8,
+
+            faiss_candidates=50
 
         )
 
@@ -728,24 +754,7 @@ if __name__ == "__main__":
         print("\nContext Passed to Next Module")
         print("=" * 70)
 
-        for i, chunk in enumerate(
-
-            context,
-
-            start=1
-
-        ):
-
-            print(f"\nChunk {i}")
-
-            print(chunk)
+        print(context)
 
         print("\nRetriever Finished.")
         print("=" * 70)
-
-    retriever = Retriever()
-
-    for i in range(10):
-            print("=" * 80)
-            print("Chunk", i)
-            print(retriever.chunks[i])
