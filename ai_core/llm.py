@@ -1,4 +1,6 @@
 import logging
+import re
+
 from .model_manager import models
 
 logging.basicConfig(level=logging.INFO)
@@ -9,38 +11,72 @@ class LLMEngine:
 
     def __init__(self):
 
+        logger.info("=" * 60)
         logger.info("Loading FLAN-T5 from ModelManager...")
+        logger.info("=" * 60)
 
         self.tokenizer = models.llm_tokenizer
-
         self.model = models.llm_model
 
         logger.info("LLM Ready.")
 
     # ==========================================================
-    # Prompt Builder (Short for FLAN)
+    # Prompt Builder
     # ==========================================================
 
     def build_prompt(self, question, context):
 
-        return f"""Context:
+        return f"""
+You are an industrial predictive maintenance assistant.
 
+Use ONLY the information provided in the context.
+
+If the answer is not present in the context, reply exactly:
+
+I don't know based on the available documents.
+
+Context:
+-----------------------
 {context}
+-----------------------
 
 Question:
 {question}
 
-Answer ONLY using the context.
-If the answer is missing, say:
-I don't know based on the available documents.
+Answer:
+"""
 
-Answer:"""
+    # ==========================================================
+    # Remove duplicate sentences
+    # ==========================================================
+
+    def clean_context(self, context):
+
+        sentences = re.split(r'(?<=[.!?])\s+', context)
+
+        unique = []
+        seen = set()
+
+        for sentence in sentences:
+
+            sentence = sentence.strip()
+
+            if len(sentence) < 5:
+                continue
+
+            if sentence not in seen:
+                unique.append(sentence)
+                seen.add(sentence)
+
+        return " ".join(unique)
 
     # ==========================================================
     # Generate Answer
     # ==========================================================
 
     def generate(self, question, context):
+
+        context = self.clean_context(context)
 
         prompt = self.build_prompt(
             question,
@@ -55,7 +91,7 @@ Answer:"""
 
             truncation=True,
 
-            max_length=512
+            max_length=1024
 
         )
 
@@ -65,11 +101,15 @@ Answer:"""
 
             max_new_tokens=120,
 
-            do_sample=True,
+            do_sample=False,
 
-            temperature=0.3,
+            num_beams=4,
 
-            top_p=0.9
+            early_stopping=True,
+
+            repetition_penalty=1.2,
+
+            length_penalty=1.0
 
         )
 
@@ -81,10 +121,18 @@ Answer:"""
 
         )
 
+        # Remove prompt if FLAN echoes it
+        if "Answer:" in answer:
+            answer = answer.split("Answer:")[-1].strip()
+
+        # Safety fallback
+        if len(answer.strip()) == 0:
+            answer = "I don't know based on the available documents."
+
         return answer
 
     # ==========================================================
-    # Chat Interface (top_k=5, max_chunks=3)
+    # Chat Interface
     # ==========================================================
 
     def ask(self, question, retriever):
@@ -94,39 +142,18 @@ Answer:"""
             top_k=5
         )
 
-        # ==========================
-        # Remove duplicate chunks
-        # ==========================
-        unique = []
+        # ----------------------------------------
+        # Keep only top 3 chunks
+        # ----------------------------------------
+
+        ranked_results = ranked_results[:3]
+
+        context_parts = []
+
         seen_chunks = set()
 
-        for result in ranked_results:
-
-            chunk = result["chunk"]
-
-            if isinstance(chunk, dict):
-                text = chunk.get("text", "")
-            else:
-                text = str(chunk)
-
-            if text not in seen_chunks:
-                seen_chunks.add(text)
-                unique.append(text)
-
-        context = "\n\n".join(unique)
-
-        # ==========================
-        # Generate answer
-        # ==========================
-        answer = self.generate(
-            question,
-            context
-        )
-
-        # ==========================
-        # Remove duplicate sources
-        # ==========================
         sources = []
+
         seen_sources = set()
 
         for result in ranked_results:
@@ -135,21 +162,44 @@ Answer:"""
 
             if isinstance(chunk, dict):
 
-                source = chunk.get("source")
+                text = chunk.get("text", "")
+                source = chunk.get("source", "Unknown")
 
-                if source and source not in seen_sources:
-                    seen_sources.add(source)
-                    sources.append(source)
+            else:
 
-        # ==========================
-        # Return response
-        # ==========================
+                text = str(chunk)
+                source = "Unknown"
+
+            if text not in seen_chunks:
+
+                context_parts.append(text)
+                seen_chunks.add(text)
+
+            if source not in seen_sources:
+
+                sources.append(source)
+                seen_sources.add(source)
+
+        context = "\n\n".join(context_parts)
+
+        answer = self.generate(
+            question,
+            context
+        )
+
         return {
+
             "question": question,
+
             "answer": answer,
+
             "context": context,
+
             "sources": sources
+
         }
+
+
 # ==========================================================
 # Main
 # ==========================================================
@@ -173,8 +223,11 @@ if __name__ == "__main__":
             break
 
         response = llm.ask(
+
             question,
+
             retriever
+
         )
 
         print("\nAnswer")
@@ -184,5 +237,5 @@ if __name__ == "__main__":
         print("\nSources")
         print("=" * 70)
 
-        for source in sorted(set(response["sources"])):
+        for source in response["sources"]:
             print("-", source)

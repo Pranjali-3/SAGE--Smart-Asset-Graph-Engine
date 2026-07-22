@@ -70,6 +70,16 @@ class Retriever:
         logging.info("Chunks loaded.")
 
         return chunks
+    
+    def reload(self):
+        """
+        Reload FAISS index and document chunks.
+        """
+
+        self.index = self.load_faiss_index()
+        self.chunks = self.load_chunks()
+
+        logging.info("Retriever reloaded.")
 
 
     # ==========================================================
@@ -348,6 +358,10 @@ class Retriever:
         """
 
         query_entities = extract_entities(query)
+
+        print("\n========== QUERY ENTITIES ==========")
+        print(query_entities)
+        print("====================================")
 
         ranked_results = []
 

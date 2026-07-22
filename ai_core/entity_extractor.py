@@ -52,23 +52,41 @@ def extract_spacy_entities(text: str) -> List[Dict]:
 # BERT Entity Extraction
 # ==========================================================
 
-def extract_bert_entities(text: str) -> List[Dict]:
-    """
-    Extract entities using BERT.
-    """
+def extract_bert_entities(text: str):
 
     results = bert_ner(text)
+
+    ALLOWED = {
+        "PER",
+        "ORG",
+        "LOC",
+        "MISC"
+    }
 
     entities = []
 
     for entity in results:
 
+        word = entity["word"]
+
+        if word.startswith("##"):
+            continue
+
+        if len(word) < 2:
+            continue
+
+        if re.fullmatch(r"[^\w]+", word):
+            continue
+
+        label = entity["entity_group"]
+
+        if label not in ALLOWED:
+            continue
+
         entities.append({
-
-            "text": entity["word"],
-            "label": entity["entity_group"],
+            "text": word,
+            "label": label,
             "source": "bert"
-
         })
 
     return entities

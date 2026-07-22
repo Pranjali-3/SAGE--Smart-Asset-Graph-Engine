@@ -470,6 +470,109 @@ def process_dataset(folder_path):
     return all_chunks
 
 # ==========================================================
+# Incremental Indexing for Uploaded Documents
+# ==========================================================
+
+def index_document(file_path):
+    """
+    Index a single uploaded document without rebuilding
+    the entire vector database.
+    """
+
+    logging.info(f"Indexing uploaded file: {file_path}")
+
+    result = ingest_document(file_path)
+
+    if result is None:
+        return
+
+    # NASA datasets already return chunks
+    if isinstance(result, list):
+        new_chunks = result
+
+    else:
+
+        text = normalize_text(result)
+
+        document_chunks = build_chunks(text)
+
+        new_chunks = []
+
+        for chunk in document_chunks:
+
+            if len(chunk) < 80:
+                continue
+
+            if is_garbage_chunk(chunk):
+                continue
+
+            new_chunks.append({
+
+                "text": chunk,
+
+                "source": os.path.basename(file_path)
+
+            })
+
+    if len(new_chunks) == 0:
+
+        logging.warning("No valid chunks created.")
+
+        return
+
+    ###########################################################
+    # Load old FAISS index
+    ###########################################################
+
+    index = faiss.read_index("data/faiss.index")
+
+    ###########################################################
+    # Load existing chunks
+    ###########################################################
+
+    with open("data/chunks.pkl", "rb") as f:
+        all_chunks = pickle.load(f)
+
+    ###########################################################
+    # Assign IDs
+    ###########################################################
+
+    start = len(all_chunks)
+
+    for i, chunk in enumerate(new_chunks):
+
+        chunk["chunk_id"] = start + i
+
+    ###########################################################
+    # Generate embeddings
+    ###########################################################
+
+    texts = [c["text"] for c in new_chunks]
+
+    embeddings = generate_embeddings(texts)
+
+    ###########################################################
+    # Add to FAISS
+    ###########################################################
+
+    index.add(embeddings)
+
+    ###########################################################
+    # Save everything
+    ###########################################################
+
+    all_chunks.extend(new_chunks)
+
+    faiss.write_index(index, "data/faiss.index")
+
+    with open("data/chunks.pkl", "wb") as f:
+        pickle.dump(all_chunks, f)
+
+    logging.info(
+        f"{len(new_chunks)} chunks added successfully."
+    )
+
+# ==========================================================
 # Main
 # ==========================================================
 

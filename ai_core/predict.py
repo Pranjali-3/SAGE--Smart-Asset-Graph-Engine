@@ -1,8 +1,10 @@
 import os
 import joblib
-import pandas as pd
 import logging
-from .data_processor import NASAProcessor
+
+import pandas as pd
+
+from .dataset_manager import DatasetManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -11,6 +13,10 @@ logger = logging.getLogger(__name__)
 class Predictor:
 
     def __init__(self):
+
+        logger.info("=" * 60)
+        logger.info("Loading Prediction Models...")
+        logger.info("=" * 60)
 
         model_folder = "models"
 
@@ -22,25 +28,35 @@ class Predictor:
             os.path.join(model_folder, "failure_model.pkl")
         )
 
-        logger.info("Prediction models loaded successfully.")
         self.feature_columns = joblib.load(
-        os.path.join(model_folder, "feature_columns.pkl")
+            os.path.join(model_folder, "feature_columns.pkl")
         )
+
+        logger.info("Prediction models loaded.")
+
+    # ======================================================
+    # Feature Preparation
+    # ======================================================
+
     def preprocess(self, data):
 
         if isinstance(data, dict):
+
             data = pd.DataFrame([data])
 
-        # If engineered features already exist,
-        # just reorder them.
         if set(self.feature_columns).issubset(data.columns):
+
             return data[self.feature_columns]
 
-        # Otherwise create them.
+        sensor_cols = [
+            f"sensor_{i}"
+            for i in range(1, 22)
+        ]
 
-        sensor_cols = [f"sensor_{i}" for i in range(1, 22)]
-
-        data["health_index"] = 1 - data[sensor_cols].mean(axis=1)
+        data["health_index"] = (
+            1 -
+            data[sensor_cols].mean(axis=1)
+        )
 
         for i in range(1, 22):
 
@@ -49,56 +65,124 @@ class Predictor:
             data[f"sensor_{i}_std"] = 0.0
 
         return data[self.feature_columns]
-    def predict_rul(self, data):
 
-        X = self.preprocess(data)
+    # ======================================================
+    # Predict RUL
+    # ======================================================
 
-        prediction = self.rul_model.predict(X)
+    def predict_rul(self, sample):
 
-        return float(prediction[0])
-    def predict_failure(self, data):
+        X = self.preprocess(sample)
 
-        X = self.preprocess(data)
+        return float(
+            self.rul_model.predict(X)[0]
+        )
 
-        prediction = self.failure_model.predict(X)
+    # ======================================================
+    # Predict Failure
+    # ======================================================
 
-        return prediction[0]
-    def predict(self, data):
+    def predict_failure(self, sample):
 
-        rul = self.predict_rul(data)
+        X = self.preprocess(sample)
 
-        failure = self.predict_failure(data)
+        return self.failure_model.predict(X)[0]
+
+    # ======================================================
+    # Unified Prediction
+    # ======================================================
+
+    def predict(self, sample):
+
+        predicted_rul = self.predict_rul(sample)
+
+        predicted_failure = self.predict_failure(sample)
+
+        return {
+            "Remaining Useful Life": round(predicted_rul, 2),
+            "Failure Status": predicted_failure
+        }
+
+    # ======================================================
+    # Predict Engine
+    # ======================================================
+
+    def predict_engine(self, engine_info):
+
+        sample = engine_info["sample"]
+
+        predicted_rul = self.predict_rul(sample)
+
+        predicted_failure = self.predict_failure(sample)
 
         return {
 
-            "Remaining Useful Life": round(rul, 2),
+            "Dataset": engine_info["dataset"],
 
-            "Failure Status": failure
+            "Engine": engine_info["engine"],
+
+            "Cycle": engine_info["cycle"],
+
+            "Actual RUL": round(engine_info["actual_rul"], 2),
+
+            "Predicted RUL": round(predicted_rul, 2),
+
+            "Failure Status": predicted_failure
 
         }
+
+
+# ======================================================
+# Demo
+# ======================================================
+
 if __name__ == "__main__":
+
+    manager = DatasetManager()
 
     predictor = Predictor()
 
-    processor = NASAProcessor(
-    r"data/nasa/archive/CMaps/train_FD001.txt"
-    )
+    print("\nIndustrial Prediction Engine")
+    print("=" * 60)
 
-    processor.load_dataset()
-    processor.calculate_rul()
+    while True:
 
-    sample = processor.prepare_prediction_sample(
-        engine_id=1,
-        cycle=101
-    )
+        value = input(
+            "\nEnter Engine ID (exit to quit): "
+        )
 
-    actual_rul = processor.df[
-        (processor.df.engine_id == 1) &
-        (processor.df.cycle == 101)
-    ]["RUL"].iloc[0]
+        if value.lower() == "exit":
 
-    print("Actual:", actual_rul)
+            break
 
-    result = predictor.predict(sample)
+        try:
 
-    print(result)
+            engine_id = int(value)
+
+        except ValueError:
+
+            print("Invalid engine id.")
+
+            continue
+
+        engine = manager.get_engine_sample(engine_id)
+
+        if engine is None:
+
+            print("Engine not found.")
+
+            continue
+
+        result = predictor.predict_engine(engine)
+
+        print()
+
+        print("=" * 60)
+        print("Prediction")
+        print("=" * 60)
+
+        for key, value in result.items():
+
+            print(f"{key:18}: {value}")
+
+        print("=" * 60)

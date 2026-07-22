@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 class NASAProcessor:
 
     def __init__(self, dataset_path):
-
         self.dataset_path = dataset_path
 
         self.columns = [
@@ -30,15 +29,21 @@ class NASAProcessor:
             "setting3"
         ]
 
-        for i in range(1, 22):
+        for i in range(1,22):
             self.columns.append(f"sensor_{i}")
 
         self.df = None
 
-        logger.info("NASA Processor initialized.")
+        print("="*60)
+        print("PATH RECEIVED BY NASA PROCESSOR")
+        print(dataset_path)
+        print(repr(dataset_path))
+        print("="*60)
+
+        self.dataset_path = dataset_path
+        ...
 
     def load_dataset(self):
-
         logger.info("Loading NASA dataset...")
 
         self.df = pd.read_csv(
@@ -51,7 +56,7 @@ class NASAProcessor:
         logger.info(f"Loaded {len(self.df)} rows.")
 
         return self.df
-    
+
     def clean_dataset(self):
         """Clean NASA dataset."""
 

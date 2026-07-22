@@ -41,6 +41,11 @@ def get_retriever():
         _retriever = Retriever()
     return _retriever
 
+def reload_retriever():
+    global _retriever
+    if _retriever is not None:
+        _retriever.reload()
+
 
 def get_kg():
     global _kg
@@ -95,9 +100,18 @@ def run_prediction_pipeline(engine_id: int, cycle: int, dataset_path: str):
 def entity_report(entity_name: str):
     try:
         kg = get_kg()
-        if not kg.entity_exists(entity_name):
-            return {"success": False, "error": "Entity not found"}
-        return {"success": True, "report": kg.failure_report(entity_name)}
+        entity = kg.find_entity(entity_name)
+
+        if entity is None:
+            return {
+                "success": False,
+                "error": "Entity not found"
+            }
+
+        return {
+            "success": True,
+            "report": kg.failure_report(entity)
+        }
     except Exception as e:
         return {"success": False, "error": str(e)}
 

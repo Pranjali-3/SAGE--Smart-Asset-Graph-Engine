@@ -1,13 +1,3 @@
-"""
-knowledge_graph.py
-
-Industrial Knowledge Graph Engine
-
-Builds a graph from extracted relationships.
-
-Author: Team AI
-"""
-
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 
@@ -21,6 +11,7 @@ from .relationship_extractor import (
     Relationship,
     extract_relationships
 )
+from .entity_extractor import extract_entities
 
 # -------------------------------------------------------
 # Logging
@@ -62,7 +53,7 @@ class KnowledgeGraph:
         Add a node if it doesn't exist.
         """
 
-        entity = entity.strip()
+        entity = self.normalize_entity(entity)
 
         if not entity:
             return
@@ -77,6 +68,42 @@ class KnowledgeGraph:
     # ============================================================
     # RELATIONSHIP FUNCTIONS
     # ============================================================
+    def build_from_text(self, text):
+
+        # Add entities
+        entities = extract_entities(text)
+
+        for entity in entities:
+            self.add_entity(entity["text"])
+
+        # Add relationships
+        relationships = extract_relationships(text)
+
+        self.build_from_relationships(relationships)
+
+    def add_document(self, text):
+        """
+        Add one uploaded document into the graph.
+        """
+
+        logger.info("Adding uploaded document to Knowledge Graph...")
+
+        self.build_from_text(text)
+
+        self.export_graphml("knowledge_graph.graphml")
+
+        logger.info("Knowledge Graph updated.")
+
+    def normalize_entity(self, entity: str):
+        """
+        Normalize entity names for consistent searching.
+        """
+
+        entity = entity.strip().lower()
+
+        entity = " ".join(entity.split())
+
+        return entity
 
     def add_relationship(self, relationship: Relationship):
 
@@ -84,21 +111,18 @@ class KnowledgeGraph:
         Add relationship as graph edge.
         """
 
-        self.add_entity(relationship.subject)
-        self.add_entity(relationship.object)
+        subject = self.normalize_entity(relationship.subject)
+        object_ = self.normalize_entity(relationship.object)
+
+        self.add_entity(subject)
+        self.add_entity(object_)
 
         self.entity_graph.add_edge(
-
-            relationship.subject,
-
-            relationship.object,
-
+            subject,
+            object_,
             relation=relationship.relation,
-
             confidence=relationship.confidence,
-
             relation_type=relationship.relation_type
-
         )
 
         logger.info(
@@ -155,11 +179,33 @@ class KnowledgeGraph:
     # GRAPH QUERY FUNCTIONS
     # ============================================================
 
-    def entity_exists(self, entity: str) -> bool:
-        """
-        Check whether an entity exists.
-        """
-        return self.entity_graph.has_node(entity)
+    def entity_exists(self, entity):
+
+        entity = self.normalize_entity(entity)
+
+        if self.entity_graph.has_node(entity):
+            return True
+
+        for node in self.entity_graph.nodes():
+
+            if entity in node:
+                return True
+
+        return False
+    
+    def find_entity(self, query):
+
+        query = self.normalize_entity(query)
+
+        if self.entity_graph.has_node(query):
+            return query
+
+        for node in self.entity_graph.nodes():
+
+            if query in node:
+                return node
+
+        return None
 
 
     def get_neighbors(self, entity: str):
@@ -470,6 +516,11 @@ class KnowledgeGraph:
         """
         Complete report for one equipment.
         """
+
+        equipment = self.find_entity(equipment)
+
+        if equipment is None:
+            return None
 
         return {
 
