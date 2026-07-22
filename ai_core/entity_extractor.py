@@ -63,6 +63,19 @@ def extract_bert_entities(text: str):
         "MISC"
     }
 
+    INDUSTRIAL_STOPWORDS = {
+        "sen",
+        "co",
+        "press",
+        "mtr",
+        "pt",
+        "vlv",
+        "comp",
+        "tt",
+        "lt",
+        "ft"
+    }
+
     entities = []
 
     for entity in results:
@@ -76,6 +89,9 @@ def extract_bert_entities(text: str):
             continue
 
         if re.fullmatch(r"[^\w]+", word):
+            continue
+
+        if word.lower() in INDUSTRIAL_STOPWORDS:
             continue
 
         label = entity["entity_group"]
@@ -444,7 +460,7 @@ def normalize_text(text: str):
 def merge_entities(*entity_lists):
     """
     Merge entities extracted from Regex,
-    spaCy and BERT.
+    spaCy and BERT. Regex gets absolute priority.
     """
 
     merged = {}
@@ -474,6 +490,11 @@ def merge_entities(*entity_lists):
                 }
 
             else:
+
+                # Regex gets absolute priority
+                if "regex" in merged[key]["sources"]:
+
+                    continue
 
                 if label not in merged[key]["labels"]:
 
@@ -595,6 +616,15 @@ def is_valid_entity(entity):
 # Final Filtering
 # ==========================================================
 
+BAD_LABEL_PAIRS = {
+    ("Compressor", "LOCATION"),
+    ("Motor", "LOCATION"),
+    ("Motor MTR-05", "FAC"),
+    ("Sensor", "ORGANIZATION"),
+    ("Compressor", "ORGANIZATION"),
+}
+
+
 def filter_entities(entities):
     """
     Remove duplicate and noisy entities.
@@ -618,13 +648,36 @@ def filter_entities(entities):
 
             continue
 
+        if (entity["text"], entity["label"]) in BAD_LABEL_PAIRS:
+
+            continue
+
         if is_valid_entity(entity):
 
             filtered.append(entity)
 
             seen.add(key)
 
-    return filtered
+    # Remove entities that are substrings of longer entities
+    final = []
+
+    for i, e1 in enumerate(filtered):
+
+        is_substring = False
+
+        for j, e2 in enumerate(filtered):
+
+            if i != j and e1["text"].lower() in e2["text"].lower():
+
+                is_substring = True
+
+                break
+
+        if not is_substring:
+
+            final.append(e1)
+
+    return final
 
 # ==========================================================
 # Public Entity Extraction Function

@@ -22,6 +22,7 @@
             <a href="{{ url_for('documents.list_documents') }}" class="{{ 'active' if request.endpoint == 'documents.list_documents' else '' }}">Documents</a>
             <a href="{{ url_for('predict.predict') }}" class="{{ 'active' if request.endpoint == 'predict.predict' else '' }}">Predict</a>
             <a href="{{ url_for('entities.entities') }}" class="{{ 'active' if request.endpoint == 'entities.entities' else '' }}">Entities</a>
+            <a href="{{ url_for('knowledge_graph.knowledge_graph') }}" class="{{ 'active' if request.endpoint == 'knowledge_graph.knowledge_graph' else '' }}">Knowledge Graph</a>
         </div>
     </nav>
 

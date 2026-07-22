@@ -74,7 +74,21 @@ INDUSTRIAL_VERBS = {
     "measure",
     "inspect",
     "open",
-    "close"
+    "close",
+    "drop",
+    "increase",
+    "decrease",
+    "rise",
+    "fall",
+    "have",
+    "indicate",
+    "suggest",
+    "show",
+    "cause",
+    "lead",
+    "result",
+    "occur",
+    "happen"
 
 }
 
@@ -445,6 +459,120 @@ def build_rule_relationships(sentence, entities):
             )
 
     # ------------------------------------------------------
+    # has_status (X has Y)
+    # ------------------------------------------------------
+
+    if " has " in sentence_lower:
+
+        doc = nlp(sentence)
+
+        for token in doc:
+
+            if token.lemma_ == "have":
+
+                subject = get_subject(token, entities)
+
+                obj = get_object(token, entities)
+
+                if subject and obj:
+
+                    relationships.append(
+
+                        Relationship(
+
+                            subject=subject,
+
+                            relation="has_status",
+
+                            object=obj,
+
+                            confidence=0.90,
+
+                            relation_type="rule"
+
+                        )
+
+                    )
+
+    # ------------------------------------------------------
+    # dropped / increased / decreased
+    # ------------------------------------------------------
+
+    trend_words = {"drop": "dropped", "increase": "increased", "decrease": "decreased", "rise": "risen", "fall": "fallen"}
+
+    for word, past in trend_words.items():
+
+        if word in sentence_lower or past in sentence_lower:
+
+            doc = nlp(sentence)
+
+            for token in doc:
+
+                if token.lemma_ == word:
+
+                    subject = get_subject(token, entities)
+
+                    if subject:
+
+                        relationships.append(
+
+                            Relationship(
+
+                                subject=subject,
+
+                                relation=past,
+
+                                object="trend",
+
+                                confidence=0.88,
+
+                                relation_type="rule"
+
+                            )
+
+                        )
+
+    # ------------------------------------------------------
+    # is_status (X is Y)
+    # ------------------------------------------------------
+
+    if " is " in sentence_lower:
+
+        doc = nlp(sentence)
+
+        for token in doc:
+
+            if token.lemma_ == "be" and token.pos_ == "AUX":
+
+                subject = get_subject(token, entities)
+
+                for child in token.children:
+
+                    if child.dep_ in ("attr", "acomp"):
+
+                        entity = match_entity(child, entities)
+
+                        if entity and subject:
+
+                            relationships.append(
+
+                                Relationship(
+
+                                    subject=subject,
+
+                                    relation="has_status",
+
+                                    object=child.text.lower(),
+
+                                    confidence=0.88,
+
+                                    relation_type="rule"
+
+                                )
+
+                            )
+
+    # ------------------------------------------------------
     # repaired
     # ------------------------------------------------------
 
@@ -561,6 +689,30 @@ def build_rule_relationships(sentence, entities):
                     )
 
                 )
+
+    # ------------------------------------------------------
+    # caused_by (fallback: entity pairs in same sentence)
+    # ------------------------------------------------------
+
+    if len(entity_names) >= 2 and not relationships:
+
+        relationships.append(
+
+            Relationship(
+
+                subject=entity_names[0],
+
+                relation="related_to",
+
+                object=entity_names[1],
+
+                confidence=0.70,
+
+                relation_type="co-occurrence"
+
+            )
+
+        )
 
     return relationships
 

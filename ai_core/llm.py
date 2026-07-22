@@ -26,25 +26,13 @@ class LLMEngine:
 
     def build_prompt(self, question, context):
 
-        return f"""
-You are an industrial predictive maintenance assistant.
+        return f"""answer the question using the information below.
 
-Use ONLY the information provided in the context.
+information: {context}
 
-If the answer is not present in the context, reply exactly:
+question: {question}
 
-I don't know based on the available documents.
-
-Context:
------------------------
-{context}
------------------------
-
-Question:
-{question}
-
-Answer:
-"""
+write a detailed answer in 3 to 5 sentences:"""
 
     # ==========================================================
     # Remove duplicate sentences
@@ -91,7 +79,7 @@ Answer:
 
             truncation=True,
 
-            max_length=1024
+            max_length=2048
 
         )
 
@@ -99,17 +87,19 @@ Answer:
 
             **inputs,
 
-            max_new_tokens=120,
+            max_new_tokens=300,
 
-            do_sample=False,
+            do_sample=True,
 
-            num_beams=4,
+            temperature=0.6,
 
-            early_stopping=True,
+            top_p=0.85,
+
+            no_repeat_ngram_size=3,
 
             repetition_penalty=1.2,
 
-            length_penalty=1.0
+            length_penalty=1.2
 
         )
 
@@ -143,10 +133,10 @@ Answer:
         )
 
         # ----------------------------------------
-        # Keep only top 3 chunks
+        # Keep top 5 chunks for richer context
         # ----------------------------------------
 
-        ranked_results = ranked_results[:3]
+        ranked_results = ranked_results[:5]
 
         context_parts = []
 

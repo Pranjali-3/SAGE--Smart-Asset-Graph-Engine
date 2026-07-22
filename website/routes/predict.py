@@ -10,12 +10,21 @@ def predict():
     result = None
 
     if request.method == "POST":
-        engine_id = int(request.form["engine_id"])
+        equipment_type = request.form.get("equipment_type", "engine")
+        machine_id = int(request.form["machine_id"])
 
         dataset_path = os.path.join(
             "data", "nasa", "archive", "CMaps", "train_FD001.txt"
         )
 
-        result = run_prediction_pipeline(engine_id, dataset_path)
+        result = run_prediction_pipeline(
+            machine_id,
+            dataset_path,
+            equipment_type
+        )
+
+        if result.get("success"):
+            result["equipment_type"] = equipment_type
+            result["machine_id"] = machine_id
 
     return render_template("predict.html", result=result)

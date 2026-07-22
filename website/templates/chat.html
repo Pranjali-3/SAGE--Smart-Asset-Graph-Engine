@@ -4,15 +4,21 @@
     <div class="card">
         <h1>Ask SAGE</h1>
 
-        <form method="POST" class="chat-form">
-            <input type="text" name="query" placeholder="Ask a question...">
+        <form method="POST" class="chat-form" id="chatForm">
+            <input type="text" name="query" id="queryInput" placeholder="Ask a question...">
+            <button type="button" id="voiceBtn" title="Speak">🎤</button>
             <button type="submit">Send</button>
         </form>
+
+        <p id="voiceStatus" style="font-size:0.85rem;color:#777;margin-top:-10px;display:none;"></p>
 
         {% if answer %}
             {% if answer.success %}
             <div class="answer-box">
-                <p class="answer-text">{{ answer.answer }}</p>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <p class="answer-text">{{ answer.answer }}</p>
+                    <button type="button" id="speakBtn" title="Read aloud" style="background:none;border:none;font-size:1.3rem;cursor:pointer;">🔊</button>
+                </div>
 
                 {% if answer.sources %}
                 <div class="sources">
@@ -29,4 +35,97 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+const voiceBtn = document.getElementById('voiceBtn');
+const queryInput = document.getElementById('queryInput');
+const voiceStatus = document.getElementById('voiceStatus');
+const speakBtn = document.getElementById('speakBtn');
+const chatForm = document.getElementById('chatForm');
+
+let recognition = null;
+let isListening = false;
+
+// ============================================================
+// Speech Recognition Setup
+// ============================================================
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = function() {
+        isListening = true;
+        voiceBtn.textContent = '⏹';
+        voiceBtn.style.backgroundColor = '#e74c3c';
+        voiceStatus.textContent = 'Listening...';
+        voiceStatus.style.display = 'block';
+    };
+
+    recognition.onresult = function(event) {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        queryInput.value = transcript;
+
+        if (event.results[event.results.length - 1].isFinal) {
+            voiceStatus.textContent = 'Recognized: ' + transcript;
+        }
+    };
+
+    recognition.onend = function() {
+        isListening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.backgroundColor = '';
+        setTimeout(() => { voiceStatus.style.display = 'none'; }, 2000);
+    };
+
+    recognition.onerror = function(event) {
+        isListening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.backgroundColor = '';
+        voiceStatus.textContent = 'Error: ' + event.error;
+    };
+}
+
+// ============================================================
+// Voice Button Click
+// ============================================================
+
+voiceBtn.addEventListener('click', function() {
+    if (!recognition) {
+        voiceStatus.textContent = 'Speech recognition not supported';
+        voiceStatus.style.display = 'block';
+        return;
+    }
+
+    if (isListening) {
+        recognition.stop();
+    } else {
+        queryInput.value = '';
+        recognition.start();
+    }
+});
+
+// ============================================================
+// Text-to-Speech
+// ============================================================
+
+if (speakBtn) {
+    speakBtn.addEventListener('click', function() {
+        const text = document.querySelector('.answer-text').textContent;
+        if (text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1;
+            speechSynthesis.speak(utterance);
+        }
+    });
+}
+</script>
 {% endblock %}

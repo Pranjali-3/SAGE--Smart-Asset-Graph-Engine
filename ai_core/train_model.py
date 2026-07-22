@@ -48,6 +48,13 @@ class ModelTrainer:
         processor.calculate_health_index()
         processor.calculate_rul()
         processor.generate_failure_labels()
+
+        print("\nFailure Label Distribution")
+        print(processor.df["failure_label"].value_counts())
+
+        print("\nFailure Label Percentage")
+        print(processor.df["failure_label"].value_counts(normalize=True) * 100)
+
         processor.calculate_rolling_features()
         processor.detect_sensor_trends()
         processor.detect_anomalies()
@@ -189,12 +196,24 @@ class ModelTrainer:
             n_jobs=-1
         )
 
+        print("\nTraining Labels")
+        print(y_failure_train.value_counts())
+
+        print("\nTesting Labels")
+        print(y_failure_test.value_counts())
+
         self.failure_model.fit(
             X_train,
             y_failure_train
         )
 
+        print("\nClasses learned:")
+        print(self.failure_model.classes_)
+
         predictions = self.failure_model.predict(X_test)
+
+        print("\nPredicted Labels")
+        print(pd.Series(predictions).value_counts())
 
         accuracy = accuracy_score(
             y_failure_test,

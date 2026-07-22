@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+<style>
+.kg-wrapper {
+    width: 100%;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.kg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.kg-search-box {
+    flex: 1;
+    max-width: 400px;
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.kg-search-box:focus { outline: none; border-color: #1F3A5F; }
+
+.kg-btn {
+    padding: 7px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.kg-btn:hover { background: #f0f0f0; border-color: #1F3A5F; }
+
+.kg-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.kg-graph-area {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+
+#kgNetwork {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #f8f9fa;
+}
+
+.kg-info-bar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.92);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #555;
+    z-index: 5;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.kg-zoom-controls {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 5;
+}
+
+.kg-zoom-controls .kg-btn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    padding: 0;
+}
+
+.kg-loading-msg {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.95rem;
+    color: #999;
+    z-index: 3;
+}
+
+/* Side Panel */
+.kg-panel {
+    width: 340px;
+    flex-shrink: 0;
+    background: #fff;
+    border-left: 1px solid #e0e0e0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.kg-panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1F3A5F;
+}
+
+.kg-panel-section {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.kg-panel-section h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.78rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kg-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 0.88rem;
+}
+.kg-stat-row .label { color: #777; }
+.kg-stat-row .value { font-weight: 600; color: #1F3A5F; }
+
+.kg-entity-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1F3A5F;
+}
+
+.kg-entity-status {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-top: 4px;
+}
+.kg-status-healthy { background: #d4edda; color: #155724; }
+.kg-status-warning { background: #fff3cd; color: #856404; }
+.kg-status-critical { background: #f8d7da; color: #721c24; }
+.kg-status-unknown { background: #e2e3e5; color: #383d41; }
+
+.kg-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.kg-list li {
+    padding: 4px 0;
+    font-size: 0.86rem;
+    color: #1F3A5F;
+    cursor: pointer;
+}
+.kg-list li:hover { color: #7CB7FF; text-decoration: underline; }
+
+.kg-rel-list li {
+    padding: 5px 0;
+    font-size: 0.84rem;
+    border-bottom: 1px solid #f5f5f5;
+    line-height: 1.4;
+    cursor: default;
+}
+
+.kg-rel-list .subj { color: #1F3A5F; font-weight: 500; }
+.kg-rel-list .pred { color: #e67e22; font-style: italic; }
+.kg-rel-list .obj { color: #1F3A5F; font-weight: 500; }
+
+.kg-empty { color: #bbb; font-size: 0.84rem; font-style: italic; padding: 6px 0; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="kg-wrapper">
+    <div class="kg-toolbar">
+        <input type="text" class="kg-search-box" id="kgSearchInput" placeholder="Search entity (e.g. PT-201, P-101)..." autocomplete="off">
+        <button class="kg-btn" id="kgSearchBtn">Search</button>
+        <button class="kg-btn" id="kgHighlightBtn">Highlight</button>
+        <button class="kg-btn" id="kgResetBtn">Reset</button>
+        <span style="flex:1"></span>
+        <button class="kg-btn" id="kgExportGraphML">GraphML</button>
+        <button class="kg-btn" id="kgExportGEXF">GEXF</button>
+    </div>
+
+    <div class="kg-body">
+        <div class="kg-graph-area">
+            <div class="kg-loading-msg" id="kgLoading">Loading graph...</div>
+            <div id="kgNetwork"></div>
+            <div class="kg-info-bar" id="kgInfoBar"></div>
+            <div class="kg-zoom-controls">
+                <button class="kg-btn" id="kgZoomIn">+</button>
+                <button class="kg-btn" id="kgZoomOut">-</button>
+            </div>
+        </div>
+
+        <div class="kg-panel">
+            <div class="kg-panel-header">Knowledge Graph</div>
+
+            <div class="kg-panel-section">
+                <h3>Statistics</h3>
+                <div class="kg-stat-row"><span class="label">Nodes</span><span class="value">{{ stats.nodes }}</span></div>
+                <div class="kg-stat-row"><span class="label">Edges</span><span class="value">{{ stats.edges }}</span></div>
+                <div class="kg-stat-row"><span class="label">Connected Components</span><span class="value">{{ stats.connected_components }}</span></div>
+                <div class="kg-stat-row"><span class="label">Density</span><span class="value">{{ "%.4f"|format(stats.density) }}</span></div>
+            </div>
+
+            <div class="kg-panel-section" id="kgEntityPanel" style="display:none;">
+                <h3>Selected Entity</h3>
+                <div class="kg-entity-name" id="kgEntityName">-</div>
+                <div id="kgEntityStatus"></div>
+                <h3 style="margin-top:12px">Neighbors</h3>
+                <ul class="kg-list" id="kgNeighborList"></ul>
+                <h3 style="margin-top:12px">Relationships</h3>
+                <ul class="kg-list kg-rel-list" id="kgRelList"></ul>
+            </div>
+
+            <div class="kg-panel-section" id="kgPlaceholder">
+                <p class="kg-empty">Click a node or search to see details.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var graphNodes = [];
+var graphEdges = [];
+var network = null;
+var nodesDS = null;
+var edgesDS = null;
+var selectedNode = null;
+
+function initGraph(data) {
+    graphNodes = data.nodes;
+    graphEdges = data.edges;
+
+    var nodesArr = graphNodes.map(function(n) {
+        return {
+            id: n.id,
+            label: n.label,
+            size: Math.max(n.size, 18),
+            color: { background: '#1F3A5F', border: '#1F3A5F',
+                     highlight: { background: '#e74c3c', border: '#c0392b' } },
+            font: { size: 11, color: '#222', face: 'Poppins', strokeWidth: 2, strokeColor: '#fff' },
+            shape: 'dot',
+            borderWidth: 2
+        };
+    });
+
+    var edgesArr = graphEdges.map(function(e) {
+        return {
+            from: e.from,
+            to: e.to,
+            label: e.label,
+            arrows: 'to',
+            font: { size: 9, color: '#888', strokeWidth: 0, align: 'middle' },
+            color: { color: '#bbb', highlight: '#1F3A5F', hover: '#1F3A5F' },
+            smooth: { type: 'curvedCW', roundness: 0.2 }
+        };
+    });
+
+    nodesDS = new vis.DataSet(nodesArr);
+    edgesDS = new vis.DataSet(edgesArr);
+
+    var container = document.getElementById('kgNetwork');
+    network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+        physics: {
+            enabled: true,
+            solver: 'forceAtlas2Based',
+            forceAtlas2Based: {
+                gravitationalConstant: -60,
+                centralGravity: 0.012,
+                springLength: 140,
+                springConstant: 0.015,
+                damping: 0.5
+            },
+            stabilization: { iterations: 250, fit: true }
+        },
+        interaction: { hover: true, tooltipDelay: 100 },
+        edges: { smooth: true }
+    });
+
+    document.getElementById('kgInfoBar').textContent = graphNodes.length + ' nodes / ' + graphEdges.length + ' edges';
+    document.getElementById('kgLoading').style.display = 'none';
+
+    network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            selectNode(params.nodes[0]);
+        } else {
+            clearSelection();
+        }
+    });
+}
+
+function selectNode(nodeId) {
+    selectedNode = nodeId;
+    fetch('/api/kg/entity/' + encodeURIComponent(nodeId))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('kgPlaceholder').style.display = 'none';
+            document.getElementById('kgEntityPanel').style.display = 'block';
+            document.getElementById('kgEntityName').textContent = d.entity;
+
+            var statusEl = document.getElementById('kgEntityStatus');
+            if (d.status && d.status !== 'unknown') {
+                statusEl.innerHTML = '<span class="kg-entity-status kg-status-' + d.status.toLowerCase() + '">' + d.status + '</span>';
+            } else {
+                statusEl.innerHTML = '';
+            }
+
+            var nbList = document.getElementById('kgNeighborList');
+            nbList.innerHTML = '';
+            if (d.neighbors && d.neighbors.length > 0) {
+                d.neighbors.forEach(function(n) {
+                    var li = document.createElement('li');
+                    li.textContent = n;
+                    li.onclick = function() {
+                        document.getElementById('kgSearchInput').value = n;
+                        selectNode(n);
+                        network.focus(n, { scale: 1.3, animation: true });
+                        network.selectNodes([n]);
+                    };
+                    nbList.appendChild(li);
+                });
+            } else {
+                nbList.innerHTML = '<li class="kg-empty">No neighbors</li>';
+            }
+
+            var relList = document.getElementById('kgRelList');
+            relList.innerHTML = '';
+            var allRels = (d.incoming || []).concat(d.outgoing || []);
+            if (allRels.length > 0) {
+                allRels.forEach(function(r) {
+                    var li = document.createElement('li');
+                    li.innerHTML = '<span class="subj">' + r.subject + '</span> <span class="pred">' + r.relation + '</span> <span class="obj">' + r.object + '</span>';
+                    relList.appendChild(li);
+                });
+            } else {
+                relList.innerHTML = '<li class="kg-empty">No relationships</li>';
+            }
+        })
+        .catch(function(e) { console.error('Entity fetch error:', e); });
+}
+
+function clearSelection() {
+    selectedNode = null;
+    document.getElementById('kgEntityPanel').style.display = 'none';
+    document.getElementById('kgPlaceholder').style.display = 'block';
+}
+
+// Search
+function doSearch() {
+    var q = document.getElementById('kgSearchInput').value.trim();
+    if (!q) return;
+    selectNode(q);
+    try { network.focus(q, { scale: 1.3, animation: true }); network.selectNodes([q]); } catch(e) {}
+}
+
+document.getElementById('kgSearchBtn').onclick = doSearch;
+document.getElementById('kgSearchInput').onkeydown = function(e) { if (e.key === 'Enter') doSearch(); };
+
+// Highlight
+document.getElementById('kgHighlightBtn').onclick = function() {
+    if (!selectedNode || !nodesDS) return;
+    var neighbors = {};
+    neighbors[selectedNode] = true;
+    graphEdges.forEach(function(e) {
+        if (e.from === selectedNode) neighbors[e.to] = true;
+        if (e.to === selectedNode) neighbors[e.from] = true;
+    });
+    nodesDS.forEach(function(n) {
+        var isIn = neighbors[n.id];
+        nodesDS.update({ id: n.id, color: {
+            background: isIn ? (n.id === selectedNode ? '#e74c3c' : '#7CB7FF') : '#ddd',
+            border: isIn ? (n.id === selectedNode ? '#c0392b' : '#5a9fd4') : '#ccc',
+            highlight: { background: '#e74c3c', border: '#c0392b' }
+        }});
+    });
+};
+
+// Reset
+document.getElementById('kgResetBtn').onclick = function() {
+    if (!nodesDS) return;
+    nodesDS.forEach(function(n) {
+        nodesDS.update({ id: n.id, color: {
+            background: '#1F3A5F', border: '#1F3A5F',
+            highlight: { background: '#e74c3c', border: '#c0392b' }
+        }});
+    });
+    network.fit({ animation: true });
+    clearSelection();
+};
+
+// Zoom
+document.getElementById('kgZoomIn').onclick = function() { if (network) { var s = network.getScale(); network.moveTo({ scale: s * 1.3 }); } };
+document.getElementById('kgZoomOut').onclick = function() { if (network) { var s = network.getScale(); network.moveTo({ scale: s / 1.3 }); } };
+
+// Export
+document.getElementById('kgExportGraphML').onclick = function() { window.location.href = '/api/kg/export/graphml'; };
+document.getElementById('kgExportGEXF').onclick = function() { window.location.href = '/api/kg/export/gexf'; };
+
+// Load data
+fetch('/api/kg/graph-data')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { initGraph(data); })
+    .catch(function(err) {
+        document.getElementById('kgLoading').textContent = 'Error loading graph: ' + err;
+        console.error(err);
+    });
+</script>
+{% endblock %}

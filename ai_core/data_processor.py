@@ -201,6 +201,7 @@ class NASAProcessor:
 
         """
         Generate failure labels from Remaining Useful Life.
+        Uses balanced thresholds based on RUL distribution.
         """
 
         logger.info("Generating failure labels...")
@@ -208,18 +209,27 @@ class NASAProcessor:
         if self.df is None:
             raise ValueError("Dataset not loaded.")
 
+        # Use balanced thresholds for better model learning
+        # Healthy: RUL > 80 (long time to failure)
+        # Warning: RUL 30-80 (approaching failure)
+        # Critical: RUL < 30 (imminent failure)
         def label(rul):
-
-            if rul > 100:
+            if rul > 80:
                 return "Healthy"
-
-            elif rul > 40:
+            elif rul > 30:
                 return "Warning"
-
             else:
                 return "Critical"
 
         self.df["failure_label"] = self.df["RUL"].apply(label)
+
+        # Log label distribution
+        label_counts = self.df["failure_label"].value_counts()
+        total = len(self.df)
+        logger.info(f"Failure label distribution:")
+        for label_name, count in label_counts.items():
+            percentage = (count / total) * 100
+            logger.info(f"  {label_name}: {count} ({percentage:.1f}%)")
 
         logger.info("Failure labels generated.")
 

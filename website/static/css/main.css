@@ -207,6 +207,16 @@ body, html {
     margin-bottom: 24px;
 }
 
+.predict-form select {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+    min-width: 140px;
+}
+
 .predict-form input {
     flex: 1;
     padding: 10px 14px;

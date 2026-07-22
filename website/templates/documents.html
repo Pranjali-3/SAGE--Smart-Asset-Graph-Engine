@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
 <div class="page-container">
-    <div class="card">
+    <div class="card" style="max-width: 900px;">
         <h1>Documents</h1>
 
         <form method="POST" action="{{ url_for('documents.upload_document') }}" enctype="multipart/form-data" class="upload-form">
@@ -10,14 +10,34 @@
         </form>
 
         <table class="doc-table">
-            <tr><th>Filename</th><th>Status</th><th>Uploaded</th></tr>
-            {% for doc in documents %}
-            <tr>
-                <td>{{ doc.filename }}</td>
-                <td><span class="status-badge status-{{ doc.status }}">{{ doc.status }}</span></td>
-                <td>{{ doc.uploaded_at.strftime('%d %b %Y, %H:%M') }}</td>
-            </tr>
-            {% endfor %}
+            <thead>
+                <tr>
+                    <th style="text-align:left; width:50%;">Filename</th>
+                    <th style="text-align:center; width:15%;">Status</th>
+                    <th style="text-align:right; width:20%;">Uploaded</th>
+                    <th style="text-align:center; width:15%;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td style="text-align:left;">{{ doc.filename }}</td>
+                    <td style="text-align:center;">
+                        <span class="status-badge status-{{ doc.status }}">{{ doc.status }}</span>
+                    </td>
+                    <td style="text-align:right; color:#888; font-size:0.88rem;">
+                        {{ doc.uploaded_at.strftime('%d %b %Y, %H:%M') }}
+                    </td>
+                    <td style="text-align:center;">
+                        <form method="POST" action="{{ url_for('documents.delete_document', doc_id=doc.id) }}"
+                              onsubmit="return confirm('Delete {{ doc.filename }}?');"
+                              style="margin:0;">
+                            <button type="submit" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:0.88rem; text-decoration:underline;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>

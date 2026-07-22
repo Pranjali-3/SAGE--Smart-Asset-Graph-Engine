@@ -250,42 +250,6 @@
 <node id="literature"/>
 <node id="review"/>
 <node id="issues"/>
-<node id="nasa"/>
-<node id="cmapss"/>
-<node id="remaining useful life"/>
-<node id="failure"/>
-<node id="title &amp; team details project: ai for industrial knowledge intelligence: unified asset &amp; operations brain team"/>
-<node id="nlp"/>
-<node id="database, flask integration"/>
-<node id="ui"/>
-<node id="problem overview"/>
-<node id="excel"/>
-<node id="knowledge graph"/>
-<node id="llm"/>
-<node id="retrieval-augmented generation (rag"/>
-<node id="ocr &amp; text extraction"/>
-<node id="vector store"/>
-<node id="entity &amp; relationship extraction"/>
-<node id="maintenance dashboard"/>
-<node id="technologies python"/>
-<node id="pytorch"/>
-<node id="pandas"/>
-<node id="numpy"/>
-<node id="langchain"/>
-<node id="html/css/javascript"/>
-<node id="implementation &amp; results implemented"/>
-<node id="1.0"/>
-<node id="mae"/>
-<node id="rmse"/>
-<node id="r²"/>
-<node id="business impact &amp; scalability applicable"/>
-<node id="iot"/>
-<node id="face"/>
-<node id="transformers"/>
-<node id="spa"/>
-<node id="networkx"/>
-<node id="tessera"/>
-<node id="inc"/>
 <edge source="P-101" target="failed">
   <data key="d0">has_status</data>
   <data key="d1">0.92</data>
@@ -316,54 +280,9 @@
   <data key="d1">0.95</data>
   <data key="d2">rule</data>
 </edge>
-<edge source="pranjali srivastava" target="nlp">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
 <edge source="dataset" target="issues">
   <data key="d0">contain</data>
   <data key="d1">0.95</data>
   <data key="d2">dependency</data>
-</edge>
-<edge source="nasa" target="cmapss">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="remaining useful life" target="failure">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="nlp" target="knowledge graph">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="knowledge graph" target="llm">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="knowledge graph" target="inc">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="llm" target="iot">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="pytorch" target="pandas">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
-</edge>
-<edge source="mae" target="rmse">
-  <data key="d0">related_to</data>
-  <data key="d1">0.7</data>
-  <data key="d2">co-occurrence</data>
 </edge>
 </graph></graphml>

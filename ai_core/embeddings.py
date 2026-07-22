@@ -572,6 +572,52 @@ def index_document(file_path):
         f"{len(new_chunks)} chunks added successfully."
     )
 
+
+def remove_document(filename):
+    """
+    Remove all chunks from a specific document and rebuild FAISS index.
+    """
+
+    logging.info(f"Removing document: {filename}")
+
+    index = faiss.read_index("data/faiss.index")
+
+    with open("data/chunks.pkl", "rb") as f:
+        all_chunks = pickle.load(f)
+
+    # Find chunks belonging to this document
+    original_count = len(all_chunks)
+    remaining_chunks = [c for c in all_chunks if c.get("source") != filename]
+    removed_count = original_count - len(remaining_chunks)
+
+    if removed_count == 0:
+        logging.warning(f"No chunks found for {filename}")
+        return 0
+
+    # Rebuild FAISS index from remaining chunks
+    if len(remaining_chunks) == 0:
+        # Empty index
+        dimension = index.d
+        new_index = faiss.IndexFlatIP(dimension)
+    else:
+        texts = [c["text"] for c in remaining_chunks]
+        embeddings = generate_embeddings(texts)
+        new_index = build_faiss_index(embeddings)
+
+    # Reassign chunk IDs
+    for i, chunk in enumerate(remaining_chunks):
+        chunk["chunk_id"] = i
+
+    # Save
+    faiss.write_index(new_index, "data/faiss.index")
+
+    with open("data/chunks.pkl", "wb") as f:
+        pickle.dump(remaining_chunks, f)
+
+    logging.info(f"Removed {removed_count} chunks for {filename}")
+
+    return removed_count
+
 # ==========================================================
 # Main
 # ==========================================================

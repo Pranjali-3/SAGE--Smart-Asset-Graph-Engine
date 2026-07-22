@@ -11,10 +11,9 @@ from flask import (
 
 from website.db_extension import db
 from website.models import Document
-from website.services.ai_bridge import reload_retriever
-from ai_core.embeddings import index_document
+from website.services.ai_bridge import reload_retriever, get_kg
+from ai_core.embeddings import index_document, remove_document
 from ai_core.ingestion import ingest_document
-from website.services.ai_bridge import get_kg
 
 
 documents_bp = Blueprint("documents", __name__)
@@ -109,3 +108,32 @@ def upload_document():
     return redirect(
         url_for("documents.list_documents")
     )
+
+
+@documents_bp.route("/documents/delete/<int:doc_id>", methods=["POST"])
+def delete_document(doc_id):
+    """Delete a document from DB, upload folder, FAISS index, and knowledge graph."""
+
+    doc = Document.query.get_or_404(doc_id)
+    filename = doc.filename
+
+    # 1. Delete file from upload folder
+    file_path = os.path.join(
+        current_app.config["UPLOAD_FOLDER"],
+        filename
+    )
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # 2. Remove from FAISS index and chunks
+    try:
+        remove_document(filename)
+        reload_retriever()
+    except Exception as e:
+        print(f"Error removing from FAISS: {e}")
+
+    # 3. Delete from database
+    db.session.delete(doc)
+    db.session.commit()
+
+    return redirect(url_for("documents.list_documents"))

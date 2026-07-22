@@ -4,17 +4,33 @@
     <div class="card">
         <h1>Predict</h1>
 
-        <form method="POST" class="predict-form">
-            <input type="number" name="engine_id" placeholder="Engine ID" required>
+        <form method="POST" class="predict-form" id="predictForm">
+            <select name="equipment_type" id="equipmentType" required>
+                <option value="engine">Engine</option>
+                <option value="sensor">Sensor</option>
+                <option value="pump">Pump</option>
+                <option value="valve">Valve</option>
+                <option value="motor">Motor</option>
+                <option value="compressor">Compressor</option>
+                <option value="turbine">Turbine</option>
+            </select>
+            <input type="number" name="machine_id" id="machineInput" placeholder="Machine Number" required>
+            <button type="button" id="voiceBtn" title="Speak machine number">🎤</button>
             <button type="submit">Predict</button>
         </form>
+
+        <p id="voiceStatus" style="font-size:0.85rem;color:#777;margin-top:-10px;display:none;"></p>
 
         {% if result %}
             {% if result.success %}
             <div class="predict-result">
                 <div class="result-row">
+                    <span class="result-label">Equipment</span>
+                    <span class="result-value">{{ result.equipment_type | capitalize }} #{{ result.machine_id }}</span>
+                </div>
+                <div class="result-row">
                     <span class="result-label">Remaining Useful Life</span>
-                    <span class="result-value">{{ result.prediction["Remaining Useful Life"] }}</span>
+                    <span class="result-value">{{ result.prediction["Remaining Useful Life"] }} cycles</span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Status</span>
@@ -37,6 +53,8 @@
                     <li>{{ action }}</li>
                 {% endfor %}
                 </ul>
+
+                <button type="button" id="speakBtn" style="margin-top:16px;padding:8px 16px;border:none;border-radius:6px;background-color:#2c2c2c;color:white;cursor:pointer;font-size:0.95rem;">🔊 Read Results Aloud</button>
             </div>
             {% else %}
                 <p class="error">Error: {{ result.error }}</p>
@@ -44,4 +62,107 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+const voiceBtn = document.getElementById('voiceBtn');
+const machineInput = document.getElementById('machineInput');
+const equipmentType = document.getElementById('equipmentType');
+const voiceStatus = document.getElementById('voiceStatus');
+const speakBtn = document.getElementById('speakBtn');
+
+let recognition = null;
+let isListening = false;
+
+// ============================================================
+// Speech Recognition Setup
+// ============================================================
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = function() {
+        isListening = true;
+        voiceBtn.textContent = '⏹';
+        voiceBtn.style.backgroundColor = '#e74c3c';
+        voiceStatus.textContent = 'Listening... Say the machine number';
+        voiceStatus.style.display = 'block';
+    };
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.trim().toLowerCase();
+        // Extract numbers from speech
+        const numbers = transcript.match(/\d+/);
+        if (numbers) {
+            machineInput.value = numbers[0];
+            voiceStatus.textContent = equipmentType.value + ' ' + numbers[0] + ' selected';
+        } else {
+            voiceStatus.textContent = 'Could not detect a number. Try again.';
+        }
+    };
+
+    recognition.onend = function() {
+        isListening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.backgroundColor = '';
+        setTimeout(() => { voiceStatus.style.display = 'none'; }, 2000);
+    };
+
+    recognition.onerror = function(event) {
+        isListening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.backgroundColor = '';
+        voiceStatus.textContent = 'Error: ' + event.error;
+    };
+}
+
+// ============================================================
+// Voice Button Click
+// ============================================================
+
+voiceBtn.addEventListener('click', function() {
+    if (!recognition) {
+        voiceStatus.textContent = 'Speech recognition not supported';
+        voiceStatus.style.display = 'block';
+        return;
+    }
+
+    if (isListening) {
+        recognition.stop();
+    } else {
+        machineInput.value = '';
+        recognition.start();
+    }
+});
+
+// ============================================================
+// Text-to-Speech for Results
+// ============================================================
+
+if (speakBtn) {
+    speakBtn.addEventListener('click', function() {
+        const equipment = document.querySelector('.result-value').textContent.trim();
+        const status = document.querySelectorAll('.status-badge')[0].textContent.trim();
+        const rul = document.querySelector('.result-value').nextElementSibling?.querySelector('.result-value')?.textContent.trim() || '';
+
+        let text = 'Prediction complete for ' + equipment + '. ';
+        text += 'Remaining useful life is ' + rul + '. ';
+        text += 'Status is ' + status + '. ';
+
+        const summary = document.querySelector('.predict-result p');
+        if (summary) {
+            text += summary.textContent;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1;
+        speechSynthesis.speak(utterance);
+    });
+}
+</script>
 {% endblock %}

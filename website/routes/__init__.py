@@ -30,12 +30,16 @@ def create_app():
     from .documents import documents_bp
     from .predict import predict_bp
     from .entities import entities_bp
+    from .voice import voice_bp
+    from .knowledge_graph import kg_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(documents_bp)
     app.register_blueprint(predict_bp)
     app.register_blueprint(entities_bp)
+    app.register_blueprint(voice_bp)
+    app.register_blueprint(kg_bp)
 
     with app.app_context():
         db.create_all()

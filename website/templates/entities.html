@@ -5,12 +5,37 @@
         <h1>Explore Entities</h1>
 
         <form method="GET" class="predict-form">
-            <input type="text" name="name" value="{{ query }}" placeholder="Entity name (e.g. P-101)">
+            <input type="text" name="name" value="{{ query }}" placeholder="Type text to extract entities...">
             <button type="submit">Search</button>
         </form>
 
-        {% if report %}
-            {% if report.success %}
+        {% if extracted %}
+        <div style="margin-top:20px;">
+            <h3>Extracted Entities</h3>
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th>Entity</th>
+                        <th>Type</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for entity in extracted %}
+                    <tr>
+                        <td>{{ entity.text }}</td>
+                        <td><span class="status-badge status-ingested">{{ entity.label }}</span></td>
+                        <td>{{ entity.confidence }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if report and report.success and report.report %}
+        <div style="margin-top:20px;">
+            <h3>Knowledge Graph Info</h3>
             <div class="predict-result">
                 <div class="result-row">
                     <span class="result-label">Equipment</span>
@@ -20,12 +45,32 @@
                     <span class="result-label">Status</span>
                     <span class="result-value">{{ report.report.status }}</span>
                 </div>
+                {% if report.report.root_causes %}
                 <h3>Root Causes</h3>
-                <p>{{ report.report.root_causes }}</p>
+                <ul>
+                {% for cause in report.report.root_causes %}
+                    <li>{{ cause }}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
             </div>
-            {% else %}
-                <p class="error">Error: {{ report.error }}</p>
-            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if stats and stats.success %}
+        <div style="margin-top:20px;">
+            <h3>Knowledge Graph Stats</h3>
+            <div class="predict-result">
+                <div class="result-row">
+                    <span class="result-label">Nodes</span>
+                    <span class="result-value">{{ stats.stats.nodes }}</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Edges</span>
+                    <span class="result-value">{{ stats.stats.edges }}</span>
+                </div>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>

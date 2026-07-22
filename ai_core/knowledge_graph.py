@@ -188,7 +188,7 @@ class KnowledgeGraph:
 
         for node in self.entity_graph.nodes():
 
-            if entity in node:
+            if entity in node.lower():
                 return True
 
         return False
@@ -202,7 +202,7 @@ class KnowledgeGraph:
 
         for node in self.entity_graph.nodes():
 
-            if query in node:
+            if query in node.lower():
                 return node
 
         return None

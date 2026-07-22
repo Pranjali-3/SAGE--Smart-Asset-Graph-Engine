@@ -1,0 +1,314 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
+  <meta lastmodifieddate="2026-07-22">
+    <creator>NetworkX 3.6.1</creator>
+  </meta>
+  <graph defaultedgetype="directed" mode="static" name="">
+    <attributes mode="static" class="edge">
+      <attribute id="0" title="relation" type="string" />
+      <attribute id="1" title="confidence" type="double" />
+      <attribute id="2" title="relation_type" type="string" />
+    </attributes>
+    <nodes>
+      <node id="P-101" label="P-101" />
+      <node id="failed" label="failed" />
+      <node id="MTR-05" label="MTR-05" />
+      <node id="PT-201" label="PT-201" />
+      <node id="fluctuations" label="fluctuations" />
+      <node id="VLV-203" label="VLV-203" />
+      <node id="leaking" label="leaking" />
+      <node id="John" label="John" />
+      <node id="accident severity prediction enter" label="accident severity prediction enter" />
+      <node id="predict severity" label="predict severity" />
+      <node id="driver info day" label="driver info day" />
+      <node id="friday" label="friday" />
+      <node id="18-30" label="18-30" />
+      <node id="vehicle-driver relation vehicle &amp; road info type of vehicle automobile owner" label="vehicle-driver relation vehicle &amp; road info type of vehicle automobile owner" />
+      <node id="vehicle governmental service year 1-2yr defect of vehicle" label="vehicle governmental service year 1-2yr defect of vehicle" />
+      <node id="road surface condition" label="road surface condition" />
+      <node id="🚗 navigation" label="🚗 navigation" />
+      <node id="7/19/26" label="7/19/26" />
+      <node id="10:07 pm" label="10:07 pm" />
+      <node id="1/7" label="1/7" />
+      <node id="road allignment escarpments" label="road allignment escarpments" />
+      <node id="vehicle movement entering" label="vehicle movement entering" />
+      <node id="0 hour" label="0 hour" />
+      <node id="12 minute" label="12 minute" />
+      <node id="2/7" label="2/7" />
+      <node id="casualty severity" label="casualty severity" />
+      <node id="🚗 predict severity" label="🚗 predict severity" />
+      <node id="89.8%" label="89.8%" />
+      <node id="3/7" label="3/7" />
+      <node id="4/7" label="4/7" />
+      <node id="• young" label="• young" />
+      <node id="• poor" label="• poor" />
+      <node id="night" label="night" />
+      <node id="slight injury" label="slight injury" />
+      <node id="second" label="second" />
+      <node id="serious injury" label="serious injury" />
+      <node id="10.2%" label="10.2%" />
+      <node id="5/7" label="5/7" />
+      <node id="vehicle automobile" label="vehicle automobile" />
+      <node id="predicted severity slight injury confidence" label="predicted severity slight injury confidence" />
+      <node id="download prediction report road accident severity prediction dashboard • b.tech ai &amp; ml" label="download prediction report road accident severity prediction dashboard • b.tech ai &amp; ml" />
+      <node id="jss academy of technical education" label="jss academy of technical education" />
+      <node id="noida • pranjali • mahi gupta •" label="noida • pranjali • mahi gupta •" />
+      <node id="6/7" label="6/7" />
+      <node id="7/7" label="7/7" />
+      <node id="fail" label="fail" />
+      <node id="summer internship project report road accident severity analysis" label="summer internship project report road accident severity analysis" />
+      <node id="kanishka patwal" label="kanishka patwal" />
+      <node id="pranjali srivastava" label="pranjali srivastava" />
+      <node id="department of computer science &amp; engineering" label="department of computer science &amp; engineering" />
+      <node id="ai &amp; ml" label="ai &amp; ml" />
+      <node id="noida summer internship-2026 table of contents 1" label="noida summer internship-2026 table of contents 1" />
+      <node id="motivation" label="motivation" />
+      <node id="objectives" label="objectives" />
+      <node id="dataset" label="dataset" />
+      <node id="literature review" label="literature review" />
+      <node id="technical feasibility" label="technical feasibility" />
+      <node id="model performance comparison" label="model performance comparison" />
+      <node id="conclusion and future work" label="conclusion and future work" />
+      <node id="one" label="one" />
+      <node id="approximately 1.35 million" label="approximately 1.35 million" />
+      <node id="each year" label="each year" />
+      <node id="the world health organization" label="the world health organization" />
+      <node id="india" label="india" />
+      <node id="nearly 150,000" label="nearly 150,000" />
+      <node id="annually" label="annually" />
+      <node id="machine learning" label="machine learning" />
+      <node id="ml" label="ml" />
+      <node id="over 12,000" label="over 12,000" />
+      <node id="logistic regression" label="logistic regression" />
+      <node id="random forest" label="random forest" />
+      <node id="xgboost" label="xgboost" />
+      <node id="catboost" label="catboost" />
+      <node id="a slight injury, serious injury" label="a slight injury, serious injury" />
+      <node id="approximately 93%" label="approximately 93%" />
+      <node id="streamlit" label="streamlit" />
+      <node id="every year" label="every year" />
+      <node id="thousands" label="thousands" />
+      <node id="eda" label="eda" />
+      <node id="f1" label="f1" />
+      <node id="road.csv" label="road.csv" />
+      <node id="12,316" label="12,316" />
+      <node id="over 700" label="over 700" />
+      <node id="six" label="six" />
+      <node id="randomizedsearchcv" label="randomizedsearchcv" />
+      <node id="5.1" label="5.1" />
+      <node id="total features" label="total features" />
+      <node id="max" label="max" />
+      <node id="35.9%" label="35.9%" />
+      <node id="duplicate records" label="duplicate records" />
+      <node id="5.2" label="5.2" />
+      <node id="three" label="three" />
+      <node id="10,415" label="10,415" />
+      <node id="84.56%" label="84.56%" />
+      <node id="1,743" label="1,743" />
+      <node id="14.15%" label="14.15%" />
+      <node id="1.28%" label="1.28%" />
+      <node id="5.3" label="5.3" />
+      <node id="weather conditions" label="weather conditions" />
+      <node id="10,063" label="10,063" />
+      <node id="81.71%" label="81.71%" />
+      <node id="1,331" label="1,331" />
+      <node id="10.81%" label="10.81%" />
+      <node id="2.40%" label="2.40%" />
+      <node id="1.01%" label="1.01%" />
+      <node id="0.80%" label="0.80%" />
+      <node id="0.50%" label="0.50%" />
+      <node id="8,798" label="8,798" />
+      <node id="71.43%" label="71.43%" />
+      <node id="3,286" label="3,286" />
+      <node id="26.68%" label="26.68%" />
+      <node id="1.56%" label="1.56%" />
+      <node id="0.32%" label="0.32%" />
+      <node id="4,271" label="4,271" />
+      <node id="34.68%" label="34.68%" />
+      <node id="31-50" label="31-50" />
+      <node id="4,087" label="4,087" />
+      <node id="33.19%" label="33.19%" />
+      <node id="1,585" label="1,585" />
+      <node id="12.87%" label="12.87%" />
+      <node id="1,548" label="1,548" />
+      <node id="12.57%" label="12.57%" />
+      <node id="6.70%" label="6.70%" />
+      <node id="1500 1000" label="1500 1000" />
+      <node id="dbdakesss" label="dbdakesss" />
+      <node id="age band" label="age band" />
+      <node id="18 18-30" label="18 18-30" />
+      <node id="driver gender 12000" label="driver gender 12000" />
+      <node id="41,437" label="41,437" />
+      <node id="2,041" label="2,041" />
+      <node id="xs" label="xs" />
+      <node id="bas" label="bas" />
+      <node id="3cm" label="3cm" />
+      <node id="9,340" label="9,340" />
+      <node id="0 2000" label="0 2000" />
+      <node id="6000 8000" label="6000 8000" />
+      <node id="recent years" label="recent years" />
+      <node id="6.1" label="6.1" />
+      <node id="indian" label="indian" />
+      <node id="shap" label="shap" />
+      <node id="analysis" label="analysis" />
+      <node id="uk" label="uk" />
+      <node id="toward safer" label="toward safer" />
+      <node id="83-86%" label="83-86%" />
+      <node id="predicting road traffic crash severity using machine learning models" label="predicting road traffic crash severity using machine learning models" />
+      <node id="6.2" label="6.2" />
+      <node id="gradient boosting" label="gradient boosting" />
+      <node id="7.1" label="7.1" />
+      <node id="3.11" label="3.11" />
+      <node id="vs code" label="vs code" />
+      <node id="7.2" label="7.2" />
+      <node id="frameworks" label="frameworks" />
+      <node id="pandas / numpy data" label="pandas / numpy data" />
+      <node id="matplotlib / seaborn data" label="matplotlib / seaborn data" />
+      <node id="under a minute" label="under a minute" />
+      <node id="8.1" label="8.1" />
+      <node id="service_year_of_vehicle" label="service_year_of_vehicle" />
+      <node id="31.9%" label="31.9%" />
+      <node id="8.2" label="8.2" />
+      <node id="rush_hour" label="rush_hour" />
+      <node id="seven" label="seven" />
+      <node id="road_surface_risk" label="road_surface_risk" />
+      <node id="light_risk" label="light_risk" />
+      <node id="high_risk_driver" label="high_risk_driver" />
+      <node id="complex_road" label="complex_road" />
+      <node id="twelve" label="twelve" />
+      <node id="8.3" label="8.3" />
+      <node id="fatal injury" label="fatal injury" />
+      <node id="just 1.28%" label="just 1.28%" />
+      <node id="adaptive synthetic sampling" label="adaptive synthetic sampling" />
+      <node id="adasyn" label="adasyn" />
+      <node id="approximately 9,853" label="approximately 9,853" />
+      <node id="25,190" label="25,190" />
+      <node id="8.4" label="8.4" />
+      <node id="first" label="first" />
+      <node id="5-fold" label="5-fold" />
+      <node id="8.5" label="8.5" />
+      <node id="80%" label="80%" />
+      <node id="20%" label="20%" />
+      <node id="two" label="two" />
+      <node id="jupyter" label="jupyter" />
+      <node id="9.1" label="9.1" />
+      <node id="jupyter notebook" label="jupyter notebook" />
+      <node id="time" label="time" />
+      <node id="10-11" label="10-11" />
+      <node id="section 12" label="section 12" />
+      <node id="enhanced xgboost" label="enhanced xgboost" />
+      <node id="section 15" label="section 15" />
+      <node id="9.2" label="9.2" />
+      <node id="9.3" label="9.3" />
+      <node id="10.1" label="10.1" />
+      <node id="0.97" label="0.97" />
+      <node id="0.72" label="0.72" />
+      <node id="0.83" label="0.83" />
+      <node id="0.84" label="0.84" />
+      <node id="0.63" label="0.63" />
+      <node id="0.94" label="0.94" />
+      <node id="0.98" label="0.98" />
+      <node id="0.96" label="0.96" />
+      <node id="weighted avg" label="weighted avg" />
+      <node id="0.92" label="0.92" />
+      <node id="0.93" label="0.93" />
+      <node id="72%" label="72%" />
+      <node id="10,208" label="10,208" />
+      <node id="98%" label="98%" />
+      <node id="63%" label="63%" />
+      <node id="fatal" label="fatal" />
+      <node id="slight" label="slight" />
+      <node id="10.2" label="10.2" />
+      <node id="driver risk index" label="driver risk index" />
+      <node id="vehicle age risk" label="vehicle age risk" />
+      <node id="rush hour" label="rush hour" />
+      <node id="10.3" label="10.3" />
+      <node id="model baseline optimized notes logistic regression" label="model baseline optimized notes logistic regression" />
+      <node id="60.20%" label="60.20%" />
+      <node id="linear" label="linear" />
+      <node id="decision tree" label="decision tree" />
+      <node id="73.38%" label="73.38%" />
+      <node id="79.38%" label="79.38%" />
+      <node id="82.10%" label="82.10%" />
+      <node id="77.02% 84.50%" label="77.02% 84.50%" />
+      <node id="81.50%" label="81.50%" />
+      <node id="80.20%" label="80.20%" />
+      <node id="84.50%" label="84.50%" />
+      <node id="12.1" label="12.1" />
+      <node id="12.2" label="12.2" />
+      <node id="a. gupta" label="a. gupta" />
+      <node id="a methodological framework for road accident severity prediction" label="a methodological framework for road accident severity prediction" />
+      <node id="analysis and severity prediction of accident using logistic regression, decision tree and random forest" label="analysis and severity prediction of accident using logistic regression, decision tree and random forest" />
+      <node id="ssrn" label="ssrn" />
+      <node id="toward safer highways using xgboost and shap" label="toward safer highways using xgboost and shap" />
+      <node id="calibrated and explainable gradient boosting for road traffic crash severity prediction" label="calibrated and explainable gradient boosting for road traffic crash severity prediction" />
+      <node id="applied sciences" label="applied sciences" />
+      <node id="world health organization" label="world health organization" />
+      <node id="global status report on road safety" label="global status report on road safety" />
+      <node id="documentation" label="documentation" />
+      <node id="xgboost documentation" label="xgboost documentation" />
+      <node id="https://xgboost.readthedocs.io/" label="https://xgboost.readthedocs.io/" />
+      <node id="https://docs.streamlit.io/" label="https://docs.streamlit.io/" />
+      <node id="learning" label="learning" />
+      <node id="ka" label="ka" />
+      <node id="sri" label="sri" />
+      <node id="ma" label="ma" />
+      <node id="gupta" label="gupta" />
+      <node id="no" label="no" />
+      <node id="literature" label="literature" />
+      <node id="review" label="review" />
+      <node id="issues" label="issues" />
+    </nodes>
+    <edges>
+      <edge source="P-101" target="failed" id="0">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="P-101" target="PT-201" id="1">
+        <attvalues>
+          <attvalue for="0" value="connected_to" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+      <edge source="MTR-05" target="failed" id="2">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="PT-201" target="fluctuations" id="3">
+        <attvalues>
+          <attvalue for="0" value="detected" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+      <edge source="VLV-203" target="leaking" id="4">
+        <attvalues>
+          <attvalue for="0" value="has_status" />
+          <attvalue for="1" value="0.92" />
+          <attvalue for="2" value="status" />
+        </attvalues>
+      </edge>
+      <edge source="John" target="P-101" id="5">
+        <attvalues>
+          <attvalue for="0" value="repaired" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="rule" />
+        </attvalues>
+      </edge>
+      <edge source="dataset" target="issues" id="6">
+        <attvalues>
+          <attvalue for="0" value="contain" />
+          <attvalue for="1" value="0.95" />
+          <attvalue for="2" value="dependency" />
+        </attvalues>
+      </edge>
+    </edges>
+  </graph>
+</gexf>

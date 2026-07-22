@@ -1,17 +1,29 @@
 from flask import Blueprint, render_template, request
 from website.services.ai_bridge import entity_report, graph_stats
+from ai_core.entity_extractor import extract_entities
 
 entities_bp = Blueprint("entities", __name__)
 
 
 @entities_bp.route("/entities", methods=["GET"])
 def entities():
-    entity_name = request.args.get("name", "").strip()
+    query = request.args.get("name", "").strip()
+    extracted = []
     report = None
 
-    if entity_name:
-        report = entity_report(entity_name)
+    if query:
+        # Extract entities from the query text
+        extracted = extract_entities(query)
+
+        # Also try knowledge graph lookup
+        report = entity_report(query)
 
     stats = graph_stats()
 
-    return render_template("entities.html", report=report, stats=stats, query=entity_name)
+    return render_template(
+        "entities.html",
+        report=report,
+        stats=stats,
+        query=query,
+        extracted=extracted
+    )
