@@ -1,0 +1,18 @@
+# Python Version
+# Python 3.11.x
+
+numpy
+pandas
+scikit-learn
+joblib
+faiss-cpu
+PyMuPDF
+pytesseract
+Pillow
+python-docx
+matplotlib
+spacy
+speech_recognition
+pyttsx3
+flask
+flask-sqlalchemy
