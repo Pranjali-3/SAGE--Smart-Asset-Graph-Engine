@@ -4,24 +4,85 @@ Turning fragmented plant documents into one queryable knowledge graph — RAG, m
 ```bash
 SAGE
 |
-|- ai_core/
-    |_ copilot.py
-    |_ data_processor.py
-    |_ embeddings.py
-    |_ entity_extraction.py
-    |_ ingestion.py
-    |_ knowledge_graph.py
-    |_ relationship_extractor.py
-    |_ retriever.py
-    |_ voice.py
-|- data/
-    |_ nasa/
-        |_ archive/
-            |_ CMaps/
-    |- chunks.pkl
-    |- faiss.index
-|- notebooks/
-    |_ ingestion.ipynb
-|- knowledge_graph.gexf
-|- knowledge_graph.graphml
-```
+├── ai_core/                                     
+│   ├── dataset_manager.py                              
+│   ├── copilot.py                               
+│   ├── data_processor.py
+│   ├── embeddings.py
+│   ├── entity_extractor.py
+│   ├── explain_prediction.py
+│   ├── ingestion.py
+│   ├── knowledge_graph.py
+│   ├── llm.py
+│   ├── predict.py
+│   ├── recommendation.py
+│   ├── relationship_extractor.py
+│   ├── retriever.py
+│   ├── train_model.py
+│   └── voice.py
+│
+├── data/                                         
+│   ├── nasa/
+│   │   └── archive/
+│   │       └── CMaps/
+│   ├── uploads/                                  
+│   ├── chunks.pkl
+│   ├── faiss.index
+│   └── metadata.json
+│
+├── models/                                      
+│   ├── rul_model.pkl
+│   ├── failure_model.pkl
+│   ├── feature_columns.pkl
+│   └── feature_importance.pkl
+│
+├── website/                                                                  
+│   ├── db_extension.py                            
+│   ├── models.py                                  
+│   │
+│   ├── routes/
+│   │   ├── __init__.py                            
+│   │   ├── dashboard.py
+│   │   ├── chat.py
+│   │   ├── documents.py
+│   │   ├── predict.py
+│   │   ├── knowledge_graph.py
+│   │   ├── voice.py
+│   │   └── entities.py
+│   │
+│   ├── services/
+│   │   ├── __init__.py                            
+│   │   └── ai_bridge.py                           
+│   │
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   ├── chat.html
+│   │   ├── documents.html
+│   │   ├── predict.html
+│   │   ├── knowledge_graph.html
+│   │   └── entities.html
+│   │
+│   └── static/
+│       ├── css/
+│       │   └── main.css
+│       └── images/
+│           └── sage_logo.png                       
+│
+├── notebooks/
+│   └── ingestion.ipynb
+│
+├── instance/                                     
+│
+├── env/                                           
+│
+├── knowledge_graph.gexf                            
+├── knowledge_graph.graphml
+│
+├── .gitignore
+├── .gitattributes
+├── README.md
+├── requirements.txt                                
+└── run.py                                          
+
+SAGE transforms scattered engineering artifacts into an intelligent assistant for maintenance and operations. By combining RAG, knowledge graphs, predictive models, and explainable AI, SAGE provides engineering teams with faster diagnostics, richer context, and evidence‑backed recommendations. 
