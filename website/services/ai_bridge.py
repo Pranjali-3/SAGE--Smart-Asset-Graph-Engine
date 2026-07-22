@@ -63,7 +63,7 @@ def search_knowledge(query: str, top_k=10):
         return {"success": False, "error": str(e)}
 
 
-def run_prediction_pipeline(engine_id: int, cycle: int, dataset_path: str):
+def run_prediction_pipeline(engine_id: int, dataset_path: str):
     try:
         processor = NASAProcessor(dataset_path)
         processor.load_dataset()
@@ -74,13 +74,15 @@ def run_prediction_pipeline(engine_id: int, cycle: int, dataset_path: str):
         processor.generate_failure_labels()
         processor.calculate_rolling_features()
 
-        row = processor.df[
-            (processor.df.engine_id == engine_id) &
-            (processor.df.cycle == cycle)
+        # Get the last cycle for this engine
+        engine_data = processor.df[
+            processor.df.engine_id == engine_id
         ]
-        if row.empty:
-            return {"success": False, "error": "No matching engine_id/cycle found."}
 
+        if engine_data.empty:
+            return {"success": False, "error": "Engine not found."}
+
+        row = engine_data.iloc[[-1]]
         sample = row.iloc[0].to_dict()
 
         prediction = get_predictor().predict(sample)

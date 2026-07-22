@@ -11,12 +11,11 @@ def predict():
 
     if request.method == "POST":
         engine_id = int(request.form["engine_id"])
-        cycle = int(request.form["cycle"])
 
         dataset_path = os.path.join(
             "data", "nasa", "archive", "CMaps", "train_FD001.txt"
         )
 
-        result = run_prediction_pipeline(engine_id, cycle, dataset_path)
+        result = run_prediction_pipeline(engine_id, dataset_path)
 
     return render_template("predict.html", result=result)
