@@ -9,10 +9,12 @@ faiss-cpu
 PyMuPDF
 pytesseract
 Pillow
-python-docx
-matplotlib
 spacy
-speech_recognition
 pyttsx3
 flask
 flask-sqlalchemy
+gunicorn
+python-docx
+matplotlib
+SpeechRecognition
+gTTS
