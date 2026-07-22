@@ -1,6 +1,5 @@
-# Python Version
-# Python 3.11.x
-
+Flask
+gunicorn
 numpy
 pandas
 scikit-learn
@@ -12,5 +11,5 @@ Pillow
 python-docx
 matplotlib
 spacy
-speech_recognition
-pyttsx3
+SpeechRecognition
+gTTS
