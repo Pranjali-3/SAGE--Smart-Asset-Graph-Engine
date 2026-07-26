@@ -2,3 +2,5 @@ env/
 .env
 models/*.pkl
 data/chunks.pkl
+__pycache__/
+*.py[cod]
